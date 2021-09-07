@@ -340,14 +340,14 @@ def tts(
                 dest=filepath,
                 voice_id=voice_id,
             )
-        else:
+        elif "CI" not in os.environ:
             tts_pyttsx3(
                 s=s,
                 dest=filepath,
                 volume=volume,
                 rate=rate,
             )
-        if volume_boost:
+        if "CI" not in os.environ and volume_boost:
             seg = pydub.AudioSegment.from_mp3(str(filepath))
             boosted_seg = seg + volume_boost  # type: ignore
             boosted_seg.export(filepath, format="mp3")

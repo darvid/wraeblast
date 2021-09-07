@@ -81,7 +81,7 @@ class RenderFilterCommand(CommandMixin, cleo.Command):
         output_path = output_dir / output_filename
         options_filename = str(self.option("options-file"))
         tmpl_filename = str(self.argument("file"))
-        output_dir.mkdir(exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
 
         loop = asyncio.get_event_loop()
         filter_context = loop.run_until_complete(
