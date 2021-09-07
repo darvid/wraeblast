@@ -1,0 +1,10 @@
+{
+	"thresholds": {
+		"blighted_maps": {
+			"quantile": "QU5"
+		},
+		"currency": {
+			"quantile": "QU5"
+		}
+	}
+}

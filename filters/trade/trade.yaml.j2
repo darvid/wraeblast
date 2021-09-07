@@ -1,0 +1,1262 @@
+{%- set tts_prefix = "FilterSounds/tts" -%}
+{%- set tts_voice = "Aria" %}
+
+{%- macro set_colors(color): -%}
+      SetBackgroundColor: '{{ color.hex }}'
+      SetBorderColor: '{{ text_color(color) }}'
+      SetTextColor: '{{ text_color(color) }}'
+{%- endmacro -%}
+
+{%- macro set_colors_from_colormap(colormap, value, vmax=None, lum_threshold=0.5): -%}
+  {%- set color = colormap.pick(value, vmax=vmax) -%}
+      SetBackgroundColor: '{{ color.hex }}'
+      SetBorderColor: '{{ text_color(color, lum_threshold=lum_threshold) }}'
+      SetTextColor: '{{ text_color(color, lum_threshold=lum_threshold) }}'
+{%- endmacro -%}
+
+{%- macro set_preset_quantile_tags(hidden=True): -%}
+{%- for category, threshold in options.thresholds.items(): -%}
+{%- if threshold.quantile is defined: -%}
+{%- for tag in get_quantile_threshold_tags(threshold.quantile, mask=hidden): %}
+- [{{ category }}, {{tag}}]
+{%- endfor -%}
+{%- endif -%}
+{%- endfor -%}
+{%- endmacro -%}
+
+{%- macro set_tags(row, thresholds=None, stack_size=1, overview=None): -%}
+    {%- for tag in get_stack_tags(stack_size): %}
+      - '{{ tag }}'
+    {%- endfor -%}
+    {%- if row is not number: -%}
+    {%- for tag in get_item_tags(row): %}
+      - '{{ tag }}'
+    {%- endfor -%}
+    {%- endif -%}
+    {%- if thresholds: -%}
+    {%- for tag in thresholds.get_tags(row, stack_size, overview): %}
+      - '{{ tag }}'
+    {%- endfor -%}
+    {%- endif -%}
+{%- endmacro -%}
+
+{%- macro set_tts_alertsound(
+      row,
+      name=None,
+      thresholds=None,
+      stack_size=1): -%}
+  {%- if not thresholds or thresholds.check_visibility(row): -%}
+  {%- set chaos_value = row.chaos_value * stack_size -%}
+  {%- if row.item_name != "Chaos Orb" and chaos_value >= 1: %}
+      CustomAlertSound: '{{
+        tts("{} {}".format(
+          row.item_name if name == None else name,
+          ctx.currency.get_human_readable_value(chaos_value)
+          if chaos_value >= 1.0 else "",
+        ).strip(), prefix=tts_prefix, voice_id=tts_voice)
+      }}'
+  {%- endif -%}
+  {%- endif %}
+{%- endmacro -%}
+
+{%- macro multi_base_type_by_quantile(
+      overview,
+      thresholds,
+      query="",
+      additional_groups=["quintile"],
+      tags=[],
+      conditions={},
+      base_type_field="base_type",
+      tts_phrase="base item"): -%}
+  {%- set df = overview.df if not query else overview.df.query(query) -%}
+  {%- set df = df.query(thresholds.get_dataframe_query()) -%}
+  {%- for group, rows in df.groupby(additional_groups): %}
+  {%- if rows|length: %}
+  - conditions:
+      BaseType:
+        {%- for base_type in rows.groupby(base_type_field).groups.keys(): %}
+        - "{{ base_type }}"
+        {%- endfor %}
+      {%- if "map_tier" in additional_groups: %}
+      MapTier: {'>=': '{{ rows.iloc[0].map_tier }}'}
+      {%- endif %}
+      {%- if "level_required" in additional_groups: %}
+      ItemLevel: {'>=': '{{ group[additional_groups.index("level_required")]|int }}'}
+      {%- endif %}
+      {%- if "influences" in additional_groups: %}
+      HasInfluence: {{ group[additional_groups.index("influences")][0] }}
+      {%- endif %}
+      {% for key, value in conditions.items(): -%}
+      {{ key }}: {{ value }}
+      {%- endfor %}
+    actions:
+      {{ set_colors_from_colormap(
+          options.colormaps.uniques,
+          rows["chaos_value"].min(),
+          vmax=overview.max_chaos_value(),
+      ) }}
+      {%- if thresholds.check_visibility(rows.iloc[0]): %}
+      {%- set min_chaos_value = ctx.currency.get_human_readable_value(
+            rows["chaos_value"].min()) -%}
+      {%- set max_chaos_value = ctx.currency.get_human_readable_value(
+            rows["chaos_value"].max()) %}
+      CustomAlertSound: '{{
+        tts("{} {}{}".format(
+          tts_phrase,
+          min_chaos_value,
+          (
+            " to {}".format(max_chaos_value)
+            if max_chaos_value > min_chaos_value else ""
+          ),
+        ).strip(), prefix=tts_prefix, voice_id=tts_voice)
+      }}'
+      {%- endif %}
+    tags:
+      {%- for tag in tags: %}
+      - {{ tag }}
+      {%- endfor -%}
+      {%- for tag in thresholds.get_tags(rows.iloc[0]): %}
+      - {{ tag }}
+      {%- endfor -%}
+  {%- endif %}
+  {%- endfor %}
+{%- endmacro -%}
+---
+presets:
+  default:
+    tags:
+      hidden:
+        - [base_types, magic]
+        - [base_types, normal]
+      visible:
+        - [artifacts, garbage]
+  endgame: &endgame
+    tags: &endgame_tags
+      hidden: &endgame_tags_hidden
+        - garbage
+        {{- set_preset_quantile_tags(hidden=True)|indent(8) }}
+        - [currency, shards, QU3]
+      visible: &endgame_tags_visible
+        - [artifacts, garbage]
+        - [fragments, simulacrum]
+        - [fragments, breach, 'breach:chayula']
+        - [fragments, 'stacks:5']
+        {{- set_preset_quantile_tags(hidden=False)|indent(8) }}
+    replace:
+      garbage: [garbage, endgame]
+  nemesis:
+    <<: *endgame
+    tags:
+      <<: *endgame_tags
+      visible:
+        - [artifacts, garbage]
+        - [fragments, simulacrum]
+        - [fragments, breach, 'breach:chayula']
+        - [fragments, 'stacks:5']
+        - [scarabs, 'stacks:5']
+        {# {%- if options.thresholds.currency.quantile: -%}
+        {%- for quantile in get_quantile_threshold_tags(
+              options.thresholds.currency.quantile): %}
+        - [currency, {{ quantile }}]
+        {%- endfor -%}
+        {%- endif %} -#}
+        {{- set_preset_quantile_tags(hidden=False)|indent(8) }}
+styles:
+  # Styles define shared actions across multiple rules. Styles can be
+  # explicitly referenced by name within rules, or define the tags
+  # they apply to.
+  default:
+    actions:
+      SetFontSize: 45
+      DisableDropSound: true
+  non_economy:
+    actions:
+      SetFontSize: 35
+  quest_items:
+    actions:
+      MinimapIcon: [0, Green, Hexagon]
+      SetBackgroundColor: green
+      SetBorderColor: white
+      SetTextColor: white
+    tags:
+      - quest_items
+  currency:
+    actions:
+      MinimapIcon:
+        - 2
+        - {{ nearest_named_color(options.colormaps.currency.name, "QU2") }}
+        - Circle
+    tags:
+      - artifacts
+      - currency
+      - fragments
+      - scarabs
+      - watchstones
+  currency.stacks:
+    actions:
+      MinimapIcon:
+        - 2
+        - {{ nearest_named_color(options.colormaps.currency.name, "QU3") }}
+        - Circle
+    tags:
+      - [currency, stacks]
+      - [fragments, stacks]
+      - [scarabs, stacks]
+  currency.extremely_valuable:
+    actions:
+      MinimapIcon:
+        - 0
+        - {{ nearest_named_color(options.colormaps.currency.name, "QU5") }}
+        - Star
+      PlayEffect: {{ nearest_named_color(options.colormaps.currency.name, "QU5") }}
+    tags:
+      - [currency, QU5]
+      - [fragments, QU5]
+      - [scarabs, QU5]
+  artifacts:
+    actions:
+      MinimapIcon:
+        - 2
+        - {{ nearest_named_color(options.colormaps.artifacts.name, "QU1") }}
+        - Moon
+    tags:
+      - artifacts
+  artifacts.extremely_valuable:
+    actions:
+      MinimapIcon:
+        - 0
+        - {{ nearest_named_color(options.colormaps.artifacts.name, "QU5") }}
+        - Moon
+      PlayEffect: {{ nearest_named_color(options.colormaps.artifacts.name, "QU5") }}
+    tags:
+      - [artifacts, notts, QU5]
+  artifacts.stacks:
+    actions:
+      MinimapIcon:
+        - 0
+        - {{ nearest_named_color(options.colormaps.artifacts.name, "QU3") }}
+        - Moon
+    tags:
+      - [artifacts, notts, stacks]
+  vials:
+    actions:
+      MinimapIcon:
+        - 0
+        - {{ nearest_named_color(options.colormaps.uniques.name, "QU3") }}
+        - Raindrop
+    tags:
+      - vials
+  vials.extremely_valuable:
+    actions:
+      MinimapIcon:
+        - 0
+        - {{ nearest_named_color(options.colormaps.uniques.name, "QU5") }}
+        - Raindrop
+      PlayEffect: {{ nearest_named_color(options.colormaps.uniques.name, "QU5") }}
+    tags:
+      - [vials, QU5]
+  six_sockets:
+    actions:
+      MinimapIcon:
+        - 2
+        - {{ nearest_named_color(options.colormaps.base_types.name, "QU3") }}
+        - Hexagon
+    tags:
+      - six_sockets
+  six_links:
+    actions:
+      MinimapIcon:
+        - 1
+        - {{ nearest_named_color(options.colormaps.base_types.name, "QU5") }}
+        - Hexagon
+    tags:
+      - six_links
+  uniques:
+    actions:
+      MinimapIcon:
+        - 1
+        - {{ nearest_named_color(options.colormaps.uniques.name, "QU1") }}
+        - Star
+    tags:
+      - unique
+  uniques.extremely_valuable:
+    actions:
+      MinimapIcon:
+        - 0
+        - {{ nearest_named_color(options.colormaps.uniques.name, "QU5") }}
+        - Star
+      PlayEffect: {{ nearest_named_color(options.colormaps.uniques.name, "QU5") }}
+    tags:
+      - [unique, extremely_valuable]
+  maps:
+    actions:
+      MinimapIcon:
+        - 2
+        - {{ nearest_named_color(options.colormaps.maps.name, "QU1") }}
+        - Square
+    tags:
+      - maps
+  maps.valuable:
+    actions:
+      MinimapIcon:
+        - 1
+        - {{ nearest_named_color(options.colormaps.maps.name, "QU3") }}
+        - Square
+    tags:
+      - [maps, QU3]
+      - [maps, QU4]
+  maps.extremely_valuable:
+    actions:
+      MinimapIcon:
+        - 0
+        - {{ nearest_named_color(options.colormaps.maps.name, "QU5") }}
+        - Square
+      PlayEffect: {{ nearest_named_color(options.colormaps.maps.name, "QU5") }}
+    tags:
+      - [maps, QU5]
+  # Note that order is important when defining styles, as they are
+  # applied in order of definition, allowing for overriding rules, much
+  # like the standard item filter behavior.
+  garbage:
+    actions:
+      DisableDropSound: true
+      CustomAlertSound: 'None'
+      MinimapIcon: -1
+      SetFontSize: 25
+    tags:
+      - garbage
+      {# - [currency, shards, QU3] #}
+      {{- set_preset_quantile_tags(hidden=True)|indent(6) }}
+  garbage.endgame:
+    actions:
+      SetFontSize: 25
+    tags:
+      - [garbage, endgame]
+  gear.rares:
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.base_types, 10, 20) }}
+    tags:
+      - [base_types, rares]
+  {# overrides.artifacts:
+    actions:
+      MinimapIcon: [1, Grey, Moon]
+      SetFontSize: 40
+    tags:
+      - [artifacts, QU1]
+      - [artifacts, QU2]
+      - [artifacts, QU3]
+      - [artifacts, QU4] #}
+  overrides.currency:
+    actions:
+      SetFontSize: 45
+    tags:
+      - [fragments, emblem]
+      - [fragments, key]
+      - [fragments, scarab]
+      - [fragments, splinter]
+      - [fragments, stacks]
+      - [fragments, vessel]
+      - currency
+      - delirium_orbs
+      - scrolls
+rules:
+  # Portal and Wisdom scrolls
+  - conditions:
+      BaseType:
+        - Portal Scroll
+        - Scroll Fragment
+        - Scroll of Wisdom
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.base_types, 20, 20) }}
+    tags: [currency, garbage, scrolls]
+
+  # Invitations
+  {%- for index, row in ctx.invitations: %}
+  - name: "Invitations - {{ row.item_name }}"
+    conditions:
+      BaseType: "{{ row.item_name }}"
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.maps, row.chaos_value) }}
+    tags:
+      - maps
+      - invitations
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.maps,
+          overview=ctx.invitations,
+      ) }}
+  {%- endfor %}
+
+  # Blighted maps
+  {%- for index, row in ctx.blighted_maps: %}
+  - conditions:
+      Class: Maps
+      BlightedMap: true
+      BaseType: {{ row.item_name.replace("Blighted ", "") }}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.blighted_maps, row.chaos_value) }}
+      {{- set_tts_alertsound(row, "blighted map", options.thresholds.blighted_maps) }}
+    tags:
+      - maps
+      - blighted_maps
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.blighted_maps,
+          overview=ctx.blighted_maps,
+      ) }}
+  {%- endfor %}
+
+  # Maps - grouped by tier >= 14 and chaos value quantile
+  # XXX: poe.ninja doesn't currently provide data for influenced maps
+  {%- for group, rows in ctx.maps.df.query(
+        "map_tier >= 14").groupby(["map_tier", "quintile"]): -%}
+  {%- set min_value = rows["chaos_value"].min() %}
+  - conditions:
+      Class: Maps
+      BaseType:
+        {%- for index, row in rows.iterrows(): %}
+        - '{{ row.base_type }}'
+        {%- endfor %}
+      MapTier: '{{ group[0] }}'
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.maps, min_value) }}
+      CustomAlertSound: '{{
+        tts("tier {} {}".format(
+          group[0],
+          ctx.currency.get_human_readable_value(min_value),
+        ), prefix=tts_prefix)
+      }}'
+    tags:
+      - maps
+  {%- endfor %}
+
+  # Maps - grouped by tier 1-14
+  {%- for map_tier in range(1, 16): -%}
+  {%- set bg = options.colormaps.maps_tiered.pick(map_tier) %}
+  - conditions:
+      Class: Maps
+      MapTier: '{{ map_tier }}'
+      AreaLevel:
+        '<=': '{{ 57 + map_tier }}'
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.maps_tiered, map_tier, 16) }}
+    tags:
+      - maps
+      - non_economy
+  {%- endfor %}
+
+  {%- for map_tier in range(1, 14): %}
+  - conditions:
+      Class: Maps
+      MapTier: '{{ map_tier }}'
+      AreaLevel:
+        '>': '{{ 57 + map_tier }}'
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.maps_tiered, map_tier, 14) }}
+    tags:
+      - maps
+      - non_economy
+      - garbage
+  {%- endfor %}
+
+  # Delirium Orbs
+  {%- for index, row in ctx.delirium_orbs: -%}
+  {%- for op, stack_size in iter_stacks(1, 5): %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class: Currency
+      BaseType: {{ row.item_name }}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.delirium_orbs, row.chaos_value) }}
+      {{- set_tts_alertsound(row, thresholds=options.thresholds.delirium_orbs, stack_size=stack_size) }}
+    tags:
+      - delirium_orbs
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.delirium_orbs,
+          stack_size=stack_size,
+          overview=ctx.delirium_orbs,
+      ) }}
+  {%- endfor -%}
+  {%- endfor %}
+
+  # Essences
+  {%- for index, row in ctx.essences: -%}
+  {%- for op, stack_size in iter_stacks(1, 5): %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class: Currency
+      BaseType: {{ row.item_name }}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.essences, row.chaos_value) }}
+      {{- set_tts_alertsound(row, thresholds=options.thresholds.essences) }}
+    tags:
+      - essences
+      {%- if stack_size > 1: %}
+      - stacks
+      {%- endif %}
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.essences,
+          stack_size=stack_size,
+          overview=ctx.essences,
+      ) }}
+  {%- endfor -%}
+  {%- endfor %}
+
+  # Fossils
+  {%- for index, row in ctx.fossils: -%}
+  {%- for op, stack_size in iter_stacks(1, 5): %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class: Currency
+      BaseType: {{ row.item_name }}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.fossils, row.chaos_value) }}
+      {{- set_tts_alertsound(row, thresholds=options.thresholds.fossils) }}
+    tags:
+      - fossils
+      {%- if stack_size > 1: %}
+      - stacks
+      {%- endif %}
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.fossils,
+          stack_size=stack_size,
+          overview=ctx.fossils,
+      ) }}
+  {%- endfor -%}
+  {%- endfor %}
+
+  # Resonators
+  {%- for index, row in ctx.resonators: -%}
+  {%- for op, stack_size in iter_stacks(1, 5): %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class: Delve Stackable Socketable Currency
+      BaseType: {{ row.item_name }}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.fossils, row.chaos_value) }}
+      {{- set_tts_alertsound(row, thresholds=options.thresholds.fossils) }}
+    tags:
+      - resonators
+      {%- if stack_size > 1: %}
+      - stacks
+      {%- endif %}
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.fossils,
+          stack_size=stack_size,
+          overview=ctx.resonators,
+      ) }}
+  {%- endfor -%}
+  {%- endfor %}
+
+  # Divination cards
+  {%- for index, row in ctx.divination_cards: -%}
+  {%- for op, stack_size in iter_stacks(1, 5): %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class: Divination
+      BaseType: {'==': "{{ row.item_name }}"}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.divination_cards, row.chaos_value) }}
+      {{- set_tts_alertsound(row, thresholds=options.thresholds.divination_cards) }}
+    tags:
+      - div_cards
+      - divination_cards
+      {%- if stack_size > 1: %}
+      - stacks
+      {%- endif %}
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.divination_cards,
+          stack_size=stack_size,
+          overview=ctx.divination_cards,
+      ) }}
+  {%- endfor -%}
+  {%- endfor %}
+
+  # Skill gems
+  {%- for index, row in ctx.skill_gems: %}
+  - name: "Skill gems: {{ row.item_name }} {{ row.gem_level }}/{{ row.gem_quality|int }}"
+    conditions:
+      Class: Gems
+      {%- if (row.item_name.startswith("Anomalous")
+              or row.item_name.startswith("Divergent")
+              or row.item_name.startswith("Phantasmal")): %}
+      GemQualityType: {{ row.item_name.split(" ")[0] }}
+      {%- endif %}
+      BaseType: {'==': "{{ normalize_skill_gem_name(row.item_name) }}"}
+      {%- if row.gem_quality > 0: %}
+      Quality: {'>=': '{{ row.gem_quality|int }}'}
+      {%- endif %}
+      GemLevel: {'>=': '{{ row.gem_level }}'}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.skill_gems, row.chaos_value) }}
+      {{- set_tts_alertsound(row, "skill gem", thresholds=options.thresholds.skill_gems) }}
+    tags:
+      - skill_gems
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.skill_gems,
+          overview=ctx.skill_gems,
+      ) }}
+  {%- endfor %}
+
+  - conditions:
+      Class: Gems
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.skill_gems, 1) }}
+    tags:
+      - skill_gems
+      - garbage
+
+  # Currency - Perandus
+  - conditions:
+      StackSize: {'>=': 15}
+      Class: Currency
+      BaseType: Perandus Coin
+    tags:
+      - currency
+
+  - conditions:
+      Class: Currency
+      BaseType: Perandus Coin
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.currency, 1) }}
+    tags:
+      - currency
+      - garbage
+
+  # Currency - Prophecies
+  {%- for index, row in ctx.prophecies: %}
+  - conditions:
+      Class: Currency
+      BaseType: Prophecy
+      Prophecy: {{ row.item_name }}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.prophecies, row.chaos_value) }}
+      {{- set_tts_alertsound(row, thresholds=options.thresholds.prophecies) }}
+    tags:
+      - prophecies
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.prophecies,
+          overview=ctx.prophecies,
+      ) }}
+  {%- endfor %}
+
+  - conditions:
+      Class: Currency
+      BaseType: Prophecy
+    tags:
+      - prophecy
+
+  - conditions:
+      Class: Currency
+      BaseType: Perandus Coin
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.currency, 1) }}
+    tags:
+      - currency
+      - garbage
+
+  # Currency - chaos orbs, each stack size
+  {%- for op, stack_size in iter_stacks(1, 10): %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class: Currency
+      BaseType: Chaos Orb
+    actions:
+      {{ set_colors_from_colormap(
+          options.colormaps.currency,
+          stack_size,
+          lum_threshold=0.75,
+      ) }}
+      CustomAlertSound: '{{ tts(
+        "Chaos Orb {}".format(
+          ctx.currency.get_human_readable_value(stack_size)
+        ),
+        prefix=tts_prefix)
+      }}'
+    tags:
+      - currency
+      - chaos
+      {%- if stack_size > 1: %}
+      - stacks
+      {%- endif %}
+  {%- endfor %}
+
+  # Expedition Artifacts
+  {%- for index, row in ctx.artifacts: -%}
+  {%- for stack_size in range(30, 0, -1): %}
+  - conditions:
+      StackSize: { '>=': "{{ stack_size }}" }
+      BaseType: {{ row.item_name }}
+    actions:
+      {{ set_colors_from_colormap(
+          options.colormaps.artifacts,
+          row.chaos_value * stack_size,
+          lum_threshold=0.45,
+      ) }}
+      {{- set_tts_alertsound(
+          row,
+          thresholds=options.thresholds.artifacts,
+          stack_size=stack_size
+      ) }}
+    tags:
+      - artifacts
+      - stacks
+      {%- if options.thresholds.artifacts.check_visibility(row): %}
+      - notts
+      {%- endif %}
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.artifacts,
+          stack_size=stack_size,
+          overview=ctx.artifacts,
+      ) }}
+  {%- endfor %}
+  {%- endfor %}
+
+  # Currency - uncategorized league-specific
+  - conditions:
+      BaseType:
+        - Enkindling Orb
+        - Instilling Orb
+        - Ritual Splinter
+    actions:
+      {{ set_colors_from_colormap(
+            options.colormaps.currency,
+            1,
+            lum_threshold=0.45,
+      ) }}
+    tags:
+      - currency
+
+  # Currency - shards not tracked by poe.ninja
+  {%- for shard_name in (
+        "Transmutation Shard",
+        "Alteration Shard",
+        "Alchemy Shard",
+        "Annulment Shard",
+        "Binding Shard",
+        "Horizon Shard",
+        "Harbinger's Shard",
+        "Engineer's Shard",
+        "Ancient Shard",
+        "Chaos Shard",
+        "Regal Shard",
+  ): -%}
+  {%- for op, stack_size in iter_stacks(1, 10): -%}
+  {%- set orb_value = (
+        ctx.currency.get_orb_for_shard_name(shard_name).chaos_value
+        if shard_name != "Chaos Shard" else 1
+  ) -%}
+  {%- set shard_chaos_value = (orb_value / 20) %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class: Currency
+      BaseType: "{{ shard_name }}"
+    actions:
+      {{ set_colors_from_colormap(
+          options.colormaps.currency,
+          shard_chaos_value * stack_size,
+          lum_threshold=0.75,
+      ) }}
+    tags:
+      - currency
+      - shards
+      {{- set_tags(
+            shard_chaos_value,
+            thresholds=options.thresholds.currency,
+            stack_size=stack_size,
+            overview=ctx.currency,
+      ) }}
+  {%- endfor %}
+  {%- endfor %}
+
+  # Currency - all others, singular and stacked
+  {%- for index, row in ctx.currency: %}
+  {%- for op, stack_size in iter_stacks(1, 10): %}
+  {%- set chaos_value = ((
+        ctx.currency.get_orb_for_shard_name(row.item_name).chaos_value
+        if row.item_name != "Chaos Shard" else 1
+  ) / 20) if row.item_name.endswith("Shard") else row.chaos_value %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class: Currency
+      BaseType: {{ row.item_name }}
+    actions:
+      {{ set_colors_from_colormap(
+          options.colormaps.currency,
+          chaos_value * stack_size,
+          lum_threshold=0.75,
+      ) }}
+      {{- set_tts_alertsound(
+            row,
+            thresholds=options.thresholds.currency,
+            stack_size=stack_size
+      ) }}
+      {# {{- set_tts_alertsound(
+          row,
+          thresholds=options.thresholds.currency,
+          stack_size=stack_size
+      ) }} #}
+    tags:
+      - currency
+      {{- set_tags(
+          row if not row.item_name.endswith("Shard") else chaos_value,
+          thresholds=options.thresholds.currency,
+          stack_size=stack_size,
+          overview=ctx.currency,
+      ) }}
+  {%- endfor %}
+  {%- endfor %}
+
+  # Vials
+  {%- for index, row in ctx.vials: %}
+  - conditions:
+      Class: Currency
+      BaseType: {{ row.item_name }}
+    actions:
+      {{ set_colors_from_colormap(
+          options.colormaps.currency,
+          row.chaos_value,
+          lum_threshold=0.75,
+      ) }}
+    tags:
+      - vials
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.vials,
+          overview=ctx.vials,
+      ) }}
+  {%- endfor %}
+
+  # Oils
+  {%- for index, row in ctx.oils: -%}
+  {%- for op, stack_size in iter_stacks(1, 10): %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class: Currency
+      BaseType: {{ row.item_name }}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.oils, row.chaos_value) }}
+      {{- set_tts_alertsound(
+          row,
+          thresholds=options.thresholds.oils,
+          stack_size=stack_size,
+      ) }}
+    tags:
+      - oils
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.oils,
+          stack_size=stack_size,
+          overview=ctx.oils,
+      ) }}
+  {%- endfor -%}
+  {%- endfor %}
+
+  # Scarabs
+  {%- for index, row in ctx.scarabs: -%}
+  {%- for op, stack_size in iter_stacks(1, 10): %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class: Map Fragments
+      BaseType: {'==': "{{ row.item_name }}"}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.fragments, row.chaos_value) }}
+      {{- set_tts_alertsound(
+          row,
+          thresholds=options.thresholds.scarabs,
+          stack_size=stack_size,
+      ) }}
+    tags:
+      - scarabs
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.scarabs,
+          stack_size=stack_size,
+          overview=ctx.scarabs,
+      ) }}
+  {%- endfor -%}
+  {%- endfor %}
+
+  # Fragments
+  {# - conditions:
+      Class:
+        - Currency
+        - Map Fragments
+      BaseType: "Splinter of Chayula"
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.fragments, 5, vmax=20) }}
+    tags:
+      - fragments #}
+
+  {% for index, row in ctx.fragments: -%}
+  {% if (
+      "Emblem" in row.item_name
+      or "Fragment" in row.item_name
+      or "Mortal" in row.item_name
+      or "Offering" in row.item_name
+      or "Sacrifice" in row.item_name
+      or "Splinter" in row.item_name
+  ): %}
+  {%- for op, stack_size in iter_stacks(1, 10): %}
+  {%- set chaos_value = row.chaos_value * stack_size %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class:
+        - Currency
+        - Map Fragments
+      BaseType: {{ row.item_name }}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.fragments, chaos_value) }}
+      {{- set_tts_alertsound(row, stack_size=stack_size) }}
+    tags:
+      - fragments
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.fragments,
+          stack_size=stack_size,
+          overview=ctx.fragments,
+      ) }}
+  {%- endfor %}
+  {% else: %}
+  - conditions:
+      Class:
+        {%- if row.item_name != "Simulacrum": %}
+        - Currency
+        {%- endif %}
+        - Map Fragments
+      BaseType: {{ row.item_name }}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.fragments, row.chaos_value) }}
+      {{- set_tts_alertsound(row, thresholds=options.thresholds.fragments) }}
+    tags:
+      - fragments
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.fragments,
+          overview=ctx.fragments,
+      ) }}
+  {% endif %}
+  {%- endfor %}
+
+  # Incubators
+  {% for index, row in ctx.incubators: %}
+  - conditions:
+      BaseType: {{ row.item_name }}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.incubators, row.chaos_value) }}
+      {{- set_tts_alertsound(row, thresholds=options.thresholds.incubators) }}
+    tags:
+      - incubators
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.incubators,
+          overview=ctx.incubators,
+      ) }}
+  {%- endfor %}
+
+  # Watchstones
+  # XXX: craftable watchstones not indexed by poe.ninja yet
+  - conditions:
+      BaseType: Watchstone
+    actions:
+      CustomAlertSound: '{{ tts("watchstone", prefix=tts_prefix) }}'
+    tags:
+      - watchstones
+      - quest_items
+
+  - conditions:
+      BaseType: Treasure Key
+    tags:
+      - quest_items
+
+  - conditions:
+      Class:
+        - Incursion Item
+        - Pantheon Soul
+        - Quest
+    actions:
+      CustomAlertSound: '{{ tts("quest item", prefix=tts_prefix) }}'
+    tags:
+      - quest_items
+
+  # TODO: Rank by region
+  - conditions:
+      BaseType: &AllRegionalWatchstones
+        - Glennach Cairns Watchstone
+        - Haewark Hamlet Watchstone
+        - Lex Ejoris Watchstone
+        - Lex Proxima Watchstone
+        - Lira Arthain Watchstone
+        - New Vastir Watchstone
+        - Tirn's End Watchstone
+        - Valdo's Rest Watchstone
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.watchstones, 1, vmax=20) }}
+    tags:
+      - watchstones
+
+  # Expedition - logbooks
+  - conditions:
+      BaseType: Expedition Logbook
+      ItemLevel: {'>=': '81'}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.maps, 20, vmax=20) }}
+      CustomAlertSound: '{{ tts("logbook", prefix=tts_prefix) }}'
+    tags: [maps, expedition]
+
+  - conditions:
+      BaseType: Expedition Logbook
+      ItemLevel: {'<': '81'}
+    tags: [maps, expedition, garbage]
+
+  # Heist - contracts and blueprints
+  # XXX: pull contract/blueprint mean chaos values from TFT
+  - conditions:
+      Class: ['Blueprint', 'Contract']
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.maps, 1, vmax=20) }}
+    tags: [maps, heist]
+
+  # Heist - currency
+  - conditions:
+      Class: Currency
+      BaseType: Rogue's Marker
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.currency, 1, vmax=20) }}
+      CustomAlertSound: '{{ tts("Rogue's Marker", prefix=tts_prefix) }}'
+    tags: [currency, heist]
+
+  # Heist - items
+  - conditions:
+      Class:
+        - Heist Brooch
+        - Heist Cloak
+        - Heist Gear
+        - Heist Tool
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.base_types, 1, vmax=20) }}
+    tags: [heist]
+
+  # Uniques - accessories
+  {{ multi_base_type_by_quantile(
+      overview=ctx.unique_accessories,
+      thresholds=options.thresholds.uniques,
+      conditions={"Rarity": "Unique"},
+      additional_groups=["base_type", "level_required"],
+      tags=["unique", "accessories"],
+      tts_phrase="unique accessory",
+    ) }}
+
+  # Uniques - armor
+  {{ multi_base_type_by_quantile(
+      overview=ctx.unique_armours,
+      thresholds=options.thresholds.uniques,
+      conditions={"Rarity": "Unique"},
+      additional_groups=["base_type", "level_required"],
+      tags=["unique", "armor"],
+      tts_phrase="unique armor",
+    ) }}
+
+  # Uniques - flasks
+  {{ multi_base_type_by_quantile(
+      overview=ctx.unique_flasks,
+      thresholds=options.thresholds.uniques,
+      conditions={"Rarity": "Unique"},
+      additional_groups=["base_type", "level_required"],
+      tags=["unique", "flasks"],
+      tts_phrase="unique flask",
+    ) }}
+
+  # Uniques - jewels
+  {{ multi_base_type_by_quantile(
+      overview=ctx.unique_jewels,
+      thresholds=options.thresholds.uniques,
+      conditions={"Rarity": "Unique"},
+      additional_groups=["base_type", "level_required"],
+      tags=["unique", "jewels"],
+      tts_phrase="unique jewel",
+    ) }}
+
+  # Uniques - maps
+  {{ multi_base_type_by_quantile(
+      overview=ctx.unique_maps,
+      thresholds=options.thresholds.uniques,
+      additional_groups=["map_tier"],
+      conditions={"Rarity": "Unique"},
+      tags=["unique", "maps"],
+      tts_phrase="unique map",
+    ) }}
+
+  # Uniques - weapons
+  {{ multi_base_type_by_quantile(
+      overview=ctx.unique_weapons,
+      thresholds=options.thresholds.uniques,
+      query="(links.isnull()) or (links < 6)",
+      additional_groups=["base_type", "level_required"],
+      conditions={"Rarity": "Unique"},
+      tags=["unique", "weapons"],
+      tts_phrase="unique weapon",
+    ) }}
+
+  # Uniques (catch-all)
+  - conditions:
+      Rarity: 'Unique'
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.uniques, 1, vmax=20) }}
+    tags:
+      - unique
+      - garbage
+
+  # Cluster jewels
+  {%- for index, row in ctx.cluster_jewels: %}
+  {%- if row.cluster_jewel_enchantment: %}
+  - conditions:
+      rowLevel: {'>=': '{{ row.level_required }}'}
+      Rarity: {'<=': Rare}
+      EnchantmentPassiveNode: '{{ row.cluster_jewel_enchantment }}'
+      EnchantmentPassiveNum: '{{ row.cluster_jewel_passives }}'
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.cluster_jewels, row.chaos_value) }}
+      {{- set_tts_alertsound(row, thresholds=options.thresholds.cluster_jewels) }}
+    tags:
+      - cluster_jewels
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.cluster_jewels,
+          overview=ctx.cluster_jewels,
+      ) }}
+  {%- endif %}
+  {%- endfor %}
+
+  # Double corrupted jewels
+  - conditions:
+      BaseType:
+        - Cobalt Jewel
+        - Crimson Jewel
+        - Viridian Jewel
+      Corrupted: true
+      CorruptedMods: {'>=': '2'}
+      Rarity: {'>=': Rare}
+    tags:
+      - double_corrupted
+      - jewels
+      - valuable
+
+  # Six-linked items (jeweller's orb recipe)
+  - conditions:
+      LinkedSockets: 6
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.currency, 20, 20) }}
+      CustomAlertSound: '{{ tts("six link", prefix=tts_prefix) }}'
+    tags:
+      - six_sockets
+      - six_links
+
+  # Six-socket items (jeweller's orb recipe)
+  - conditions:
+      Sockets: 6
+      Rarity: {'<=': Rare}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.currency, 1, 20) }}
+      CustomAlertSound: '{{ tts("six socket", prefix=tts_prefix) }}'
+    tags:
+      - six_sockets
+
+  # Influenced base items
+  {{ multi_base_type_by_quantile(
+      overview=ctx.base_types,
+      thresholds=options.thresholds.base_types,
+      query="influences.str.len() == 1",
+      conditions={"Rarity": {"<": "Unique"}},
+      additional_groups=["level_required", "influences", "percentile"],
+      tags=["base_types", "gear"],
+      tts_phrase="influenced base",
+    ) }}
+
+  {%- set garbage_color = options.colormaps.base_types.pick(1, 20) -%}
+  {%- set flask_color = options.colormaps.flasks.pick(1, 20) -%}
+  {%- set life_flask_color = options.colormaps.life_flasks.pick(1, 20) -%}
+  {%- set mana_flask_color = options.colormaps.mana_flasks.pick(1, 20) -%}
+  # Flasks
+  - conditions:
+      Class: Life Flask
+      Rarity: {'<': Unique}
+    actions:
+      SetBackgroundColor: '{{ life_flask_color.hex }}'
+      SetBorderColor: '{{ text_color(life_flask_color) }}'
+      SetTextColor: '{{ text_color(life_flask_color) }}'
+    tags: [flask, garbage, early_league]
+
+  - conditions:
+      Class: Mana Flask
+      Rarity: {'<': Unique}
+    actions:
+      SetBackgroundColor: '{{ mana_flask_color.hex }}'
+      SetBorderColor: '{{ text_color(mana_flask_color) }}'
+      SetTextColor: '{{ text_color(mana_flask_color) }}'
+    tags: [flask, garbage, early_league]
+
+  - conditions:
+      Class: Flask
+      Rarity: {'<': Unique}
+    actions:
+      SetBackgroundColor: '{{ flask_color.hex }}'
+      SetBorderColor: '{{ text_color(flask_color) }}'
+      SetTextColor: '{{ text_color(flask_color) }}'
+    tags: [flask, garbage, early_league]
+
+  - conditions:
+      Class: &AllGearClasses
+        - Amulets
+        - Belts
+        - Body Armour
+        - Boots
+        - Bows
+        - Claws
+        - Daggers
+        - Flask
+        - Gloves
+        - Helmets
+        - Jewel
+        - One Hand
+        - Quivers
+        - Rings
+        - Rune Dagger
+        - Sceptre
+        - Shields
+        - Staves
+        - Two Hand
+        - Wand
+        - Warstaves
+      Rarity: {'=': Rare}
+    actions:
+      SetBackgroundColor: '{{ garbage_color.hex }}'
+      SetBorderColor: '{{ text_color(garbage_color) }}'
+      SetTextColor: '{{ text_color(garbage_color) }}'
+    tags: [base_types, gear, garbage, rares]
+
+  - conditions:
+      Class: *AllGearClasses
+      Rarity: {'=': Magic}
+    actions:
+      SetBackgroundColor: '{{ garbage_color.hex }}'
+      SetBorderColor: '{{ text_color(garbage_color) }}'
+      SetTextColor: '{{ text_color(garbage_color) }}'
+    tags: [base_types, gear, garbage, magic]
+
+  - conditions:
+      Class: *AllGearClasses
+      Rarity: {'=': Normal}
+    actions:
+      SetBackgroundColor: '{{ garbage_color.hex }}'
+      SetBorderColor: '{{ text_color(garbage_color) }}'
+      SetTextColor: '{{ text_color(garbage_color) }}'
+    tags: [base_types, gear, garbage, normal]

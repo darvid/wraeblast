@@ -1,0 +1,128 @@
+{
+    "thresholds": {
+        "artifacts": {
+            "quantile": "D2"
+        },
+        "base_types": {
+            "quantile": "D2"
+        },
+        "blighted_maps": {
+            "quantile": "QU1"
+        },
+        "cluster_jewels": {
+            "quantile": "D2"
+        },
+        "currency": {
+            "quantile": "D2"
+        },
+        "delirium_orbs": {
+            "quantile": "QU1"
+        },
+        "essences": {
+            "quantile": "QU2"
+        },
+        "divination_cards": {
+            "quantile": "QU4"
+        },
+        "fossils": {
+            "quantile": "D2"
+        },
+        "fragments": {
+            "quantile": "D2"
+        },
+        "incubators": {
+            "quantile": "QU2"
+        },
+        "skill_gems": {
+            "quantile": "QU4"
+        },
+        "maps": {
+            "quantile": "D2"
+        },
+        "oils": {
+            "quantile": "D2"
+        },
+        "prophecies": {
+            "quantile": "QU4"
+        },
+        "scarabs": {
+            "quantile": "QU2"
+        },
+        "uniques": {
+            "quantile": "QU5"
+        },
+        "vials": {
+            "quantile": "QU2"
+        },
+        "watchstones": {
+            "quantile": "D2"
+        }
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Thermal_20"
+        },
+        "cluster_jewels": {
+            "name": "Thermal_20"
+        },
+        "currency": {
+            "name": "Thermal_20"
+        },
+        "delirium_orbs": {
+            "name": "Thermal_20"
+        },
+        "divination_cards": {
+            "name": "Thermal_20"
+        },
+        "essences": {
+            "name": "Thermal_20"
+        },
+        "flasks": {
+            "name": "Thermal_20"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Thermal_20"
+        },
+        "skill_gems": {
+            "name": "Thermal_20"
+        },
+        "life_flasks": {
+            "name": "Thermal_20"
+        },
+        "mana_flasks": {
+            "name": "Thermal_20"
+        },
+        "maps_tiered": {
+            "name": "Thermal_20",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Thermal_20"
+        },
+        "oils": {
+            "name": "Thermal_20"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "Thermal_20"
+        }
+    },
+    "whitelist": {}
+}

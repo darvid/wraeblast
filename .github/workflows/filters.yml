@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Build filters
+on:
+  schedule:
+    - cron: "0 0 * * *"
+jobs:
+  build:
+    name: Render all filters
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade poetry
+          poetry install
+      - name: Test with tox
+        run: |
+          poetry run tox -e py39 -vvv
+      - name: Build filters
+        run: |
+          poetry run ./filters/build.sh
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+      - name: Archive filters
+        uses: actions/upload-artifact@v2
+        with:
+          name: "wraeblast-${{ env.RELEASE_NAME }}"
+          path: |
+            output/**
+          retention-days: 5
+        env:
+          RELEASE_NAME: nightly-release-${{ steps.date.outputs.date }}

@@ -1,0 +1,205 @@
+VISIBILITY: VIS_SHOW
+          | VIS_HIDE
+          | VIS_CONTINUE
+NONE: "\"None\""
+bool: "True" -> true
+    | "False" -> false
+!op: "=" | "!" | "<" | "<=" | ">" | ">=" | "=="
+!rarity: RARITY_NORMAL
+       | RARITY_MAGIC
+       | RARITY_RARE
+       | RARITY_UNIQUE
+!shape: SHAPE_CIRCLE
+      | SHAPE_DIAMOND
+      | SHAPE_HEXAGON
+      | SHAPE_SQUARE
+      | SHAPE_STAR
+      | SHAPE_TRIANGLE
+      | SHAPE_CROSS
+      | SHAPE_MOON
+      | SHAPE_RAINDROP
+      | SHAPE_KITE
+      | SHAPE_PENTAGON
+      | SHAPE_UPSIDEDOWNHOUSE
+!named_color: COLOR_RED
+            | COLOR_GREEN
+            | COLOR_BLUE
+            | COLOR_BROWN
+            | COLOR_WHITE
+            | COLOR_YELLOW
+            | COLOR_CYAN
+            | COLOR_GREY
+            | COLOR_ORANGE
+            | COLOR_PINK
+            | COLOR_PURPLE
+influence: INFLUENCE_SHAPER
+         | INFLUENCE_ELDER
+         | INFLUENCE_CRUSADER
+         | INFLUENCE_HUNTER
+         | INFLUENCE_REDEEMER
+         | INFLUENCE_WARLORD
+         | INFLUENCE_NONE
+multi_string: (STRING | /[^ \n]+/)+
+SOCKET_GROUP: "R" | "G" | "B" | "D" | "A" | "W"
+socket_group: ["0".."6"] SOCKET_GROUP~1..6
+
+condition: COND_AREALEVEL op? NUMBER
+         | COND_LINKEDSOCKETS op? NUMBER
+         | COND_SOCKETGROUP socket_group
+         | COND_SOCKETS op? socket_group
+         | COND_RARITY op? rarity
+         | COND_ITEMLEVEL op NUMBER
+         | COND_DROPLEVEL op NUMBER
+         | COND_QUALITY [op] NUMBER
+         | COND_CLASS multi_string
+         | COND_BASETYPE "=="? multi_string
+         | COND_PROPHECY multi_string
+         | COND_HEIGHT op? NUMBER
+         | COND_WIDTH op? NUMBER
+         | COND_HASEXPLICITMOD [op NUMBER] multi_string
+         | COND_ANYENCHANTMENT bool
+         | COND_HASENCHANTMENT multi_string
+         | COND_ENCHANTMENTPASSIVENODE multi_string
+         | COND_ENCHANTMENTPASSIVENUM op NUMBER
+         | COND_STACKSIZE op NUMBER
+         | COND_GEMLEVEL op NUMBER
+         | COND_GEMQUALITYTYPE multi_string
+         | COND_ALTERNATEQUALITY bool
+         | COND_REPLICA bool
+         | COND_IDENTIFIED bool
+         | COND_CORRUPTED bool
+         | COND_CORRUPTEDMODS op NUMBER
+         | COND_MIRRORED bool
+         | COND_ELDERITEM bool
+         | COND_SHAPERITEM bool
+         | COND_HASINFLUENCE [influence+]
+         | COND_FRACTUREDITEM bool
+         | COND_SYNTHESISEDITEM bool
+         | COND_ELDERMAP bool
+         | COND_SHAPEDMAP bool
+         | COND_BLIGHTEDMAP bool
+         | COND_MAPTIER op? NUMBER
+action: ACTION_SETBORDERCOLOR RGBA
+      | ACTION_SETTEXTCOLOR RGBA
+      | ACTION_SETBACKGROUNDCOLOR RGBA
+      | ACTION_SETFONTSIZE NUMBER
+      | ACTION_PLAYALERTSOUND [NONE | NUMBER NUMBER?]
+      | ACTION_PLAYALERTSOUNDPOSITIONAL [NONE | NUMBER NUMBER?]
+      | ACTION_DISABLEDROPSOUND bool
+      | ACTION_ENABLEDROPSOUND bool
+      | ACTION_CUSTOMALERTSOUND [NONE | STRING] NUMBER?
+      | ACTION_MINIMAPICON NUMBER [named_color shape]
+      | ACTION_PLAYEFFECT named_color ("Temp")?
+rule: VISIBILITY ((condition | action) NEWLINE)*
+start: rule+
+
+VIS_SHOW: "Show"
+VIS_HIDE: "Hide"
+VIS_CONTINUE: "Continue"
+
+RARITY_NORMAL: "Normal"
+RARITY_MAGIC: "Magic"
+RARITY_RARE: "Rare"
+RARITY_UNIQUE: "Unique"
+
+SHAPE_CIRCLE: "Circle"
+SHAPE_CROSS: "Cross"
+SHAPE_DIAMOND: "Diamond"
+SHAPE_HEXAGON: "Hexagon"
+SHAPE_KITE: "Kite"
+SHAPE_MOON: "Moon"
+SHAPE_PENTAGON: "Pentagon"
+SHAPE_RAINDROP: "Raindrop"
+SHAPE_SQUARE: "Square"
+SHAPE_STAR: "Star"
+SHAPE_TRIANGLE: "Triangle"
+SHAPE_UPSIDEDOWNHOUSE: "UpsideDownHouse"
+
+COLOR_BLUE: "Blue"
+COLOR_BROWN: "Brown"
+COLOR_CYAN: "Cyan"
+COLOR_GREEN: "Green"
+COLOR_GREY: "Grey"
+COLOR_ORANGE: "Orange"
+COLOR_PINK: "Pink"
+COLOR_PURPLE: "Purple"
+COLOR_RED: "Red"
+COLOR_WHITE: "White"
+COLOR_YELLOW: "Yellow"
+
+INFLUENCE_SHAPER: "Shaper"
+INFLUENCE_ELDER: "Elder"
+INFLUENCE_CRUSADER: "Crusader"
+INFLUENCE_HUNTER: "Hunter"
+INFLUENCE_REDEEMER: "Redeemer"
+INFLUENCE_WARLORD: "Warlord"
+INFLUENCE_NONE: "None"
+
+COND_ALTERNATEQUALITY: "AlternateQuality"
+COND_ANYENCHANTMENT: "AnyEnchantment"
+COND_AREALEVEL: "AreaLevel"
+COND_BASETYPE: "BaseType"
+COND_BLIGHTEDMAP: "BlightedMap"
+COND_CLASS: "Class"
+COND_CORRUPTED: "Corrupted"
+COND_CORRUPTEDMODS: "CorruptedMods"
+COND_DROPLEVEL: "DropLevel"
+COND_ELDERITEM: "ElderItem"
+COND_ELDERMAP: "ElderMap"
+COND_ENCHANTMENTPASSIVENODE: "EnchantmentPassiveNode"
+COND_ENCHANTMENTPASSIVENUM: "EnchantmentPassiveNum"
+COND_FRACTUREDITEM: "FracturedItem"
+COND_GEMLEVEL: "GemLevel"
+COND_GEMQUALITYTYPE: "GemQualityType"
+COND_HASENCHANTMENT: "HasEnchantment"
+COND_HASEXPLICITMOD: "HasExplicitMod"
+COND_HASINFLUENCE: "HasInfluence"
+COND_HEIGHT: "Height"
+COND_IDENTIFIED: "Identified"
+COND_ITEMLEVEL: "ItemLevel"
+COND_LINKEDSOCKETS: "LinkedSockets"
+COND_MAPTIER: "MapTier"
+COND_MIRRORED: "Mirrored"
+COND_PROPHECY: "Prophecy"
+COND_QUALITY: "Quality"
+COND_RARITY: "Rarity"
+COND_REPLICA: "Replica"
+COND_SHAPEDMAP: "ShapedMap"
+COND_SHAPERITEM: "ShaperItem"
+COND_SOCKETGROUP: "SocketGroup"
+COND_SOCKETS: "Sockets"
+COND_STACKSIZE: "StackSize"
+COND_SYNTHESISEDITEM: "SynthesisedItem"
+COND_WIDTH: "Width"
+
+ACTION_CUSTOMALERTSOUND: "CustomAlertSound"
+ACTION_DISABLEDROPSOUND: "DisableDropSound"
+ACTION_ENABLEDROPSOUND: "EnableDropSound"
+ACTION_MINIMAPICON: "MinimapIcon"
+ACTION_PLAYALERTSOUND: "PlayAlertSound"
+ACTION_PLAYALERTSOUNDPOSITIONAL: "PlayAlertSoundPositional"
+ACTION_PLAYEFFECT: "PlayEffect"
+ACTION_SETBACKGROUNDCOLOR: "SetBackgroundColor"
+ACTION_SETBORDERCOLOR: "SetBorderColor"
+ACTION_SETFONTSIZE: "SetFontSize"
+ACTION_SETTEXTCOLOR: "SetTextColor"
+
+STRING: ESCAPED_STRING
+ANY_STRING: /[^" ]+|"[^"]+"/
+NUMBER: INT
+SPACE: " "
+RGBA: RED " " GREEN " " BLUE [" " ALPHA]?
+ALPHA: INT
+RED: INT
+GREEN: INT
+BLUE: INT
+COMMENT: "#" /[^\n]/*
+
+%import common.ESCAPED_STRING
+%import common.NEWLINE
+%import common.INT
+%import common.SIGNED_NUMBER
+%import common.WS
+%ignore WS
+%ignore COMMENT
+%ignore " "

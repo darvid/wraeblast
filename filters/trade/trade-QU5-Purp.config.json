@@ -1,0 +1,128 @@
+{
+    "thresholds": {
+        "artifacts": {
+            "quantile": "QU5"
+        },
+        "base_types": {
+            "quantile": "QU5"
+        },
+        "blighted_maps": {
+            "quantile": "QU1"
+        },
+        "cluster_jewels": {
+            "quantile": "QU5"
+        },
+        "currency": {
+            "quantile": "QU5"
+        },
+        "delirium_orbs": {
+            "quantile": "QU1"
+        },
+        "essences": {
+            "quantile": "QU2"
+        },
+        "divination_cards": {
+            "quantile": "QU4"
+        },
+        "fossils": {
+            "quantile": "QU5"
+        },
+        "fragments": {
+            "quantile": "QU5"
+        },
+        "incubators": {
+            "quantile": "QU2"
+        },
+        "skill_gems": {
+            "quantile": "QU4"
+        },
+        "maps": {
+            "quantile": "QU5"
+        },
+        "oils": {
+            "quantile": "QU5"
+        },
+        "prophecies": {
+            "quantile": "QU4"
+        },
+        "scarabs": {
+            "quantile": "QU2"
+        },
+        "uniques": {
+            "quantile": "QU5"
+        },
+        "vials": {
+            "quantile": "QU2"
+        },
+        "watchstones": {
+            "quantile": "QU5"
+        }
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Purp_7"
+        },
+        "cluster_jewels": {
+            "name": "Purp_7"
+        },
+        "currency": {
+            "name": "Purp_7"
+        },
+        "delirium_orbs": {
+            "name": "Purp_7"
+        },
+        "divination_cards": {
+            "name": "Purp_7"
+        },
+        "essences": {
+            "name": "Purp_7"
+        },
+        "flasks": {
+            "name": "Purp_7"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Purp_7"
+        },
+        "skill_gems": {
+            "name": "Purp_7"
+        },
+        "life_flasks": {
+            "name": "Purp_7"
+        },
+        "mana_flasks": {
+            "name": "Purp_7"
+        },
+        "maps_tiered": {
+            "name": "Purp_7",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Purp_7"
+        },
+        "oils": {
+            "name": "Purp_7"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "Purp_7"
+        }
+    },
+    "whitelist": {}
+}

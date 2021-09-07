@@ -1,0 +1,128 @@
+{
+    "thresholds": {
+        "artifacts": {
+            "quantile": "D2"
+        },
+        "base_types": {
+            "quantile": "D2"
+        },
+        "blighted_maps": {
+            "quantile": "QU1"
+        },
+        "cluster_jewels": {
+            "quantile": "D2"
+        },
+        "currency": {
+            "quantile": "D2"
+        },
+        "delirium_orbs": {
+            "quantile": "QU1"
+        },
+        "essences": {
+            "quantile": "QU2"
+        },
+        "divination_cards": {
+            "quantile": "QU4"
+        },
+        "fossils": {
+            "quantile": "D2"
+        },
+        "fragments": {
+            "quantile": "D2"
+        },
+        "incubators": {
+            "quantile": "QU2"
+        },
+        "skill_gems": {
+            "quantile": "QU4"
+        },
+        "maps": {
+            "quantile": "D2"
+        },
+        "oils": {
+            "quantile": "D2"
+        },
+        "prophecies": {
+            "quantile": "QU4"
+        },
+        "scarabs": {
+            "quantile": "QU2"
+        },
+        "uniques": {
+            "quantile": "QU5"
+        },
+        "vials": {
+            "quantile": "QU2"
+        },
+        "watchstones": {
+            "quantile": "D2"
+        }
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "PurpOr_7"
+        },
+        "cluster_jewels": {
+            "name": "PurpOr_7"
+        },
+        "currency": {
+            "name": "PurpOr_7"
+        },
+        "delirium_orbs": {
+            "name": "PurpOr_7"
+        },
+        "divination_cards": {
+            "name": "PurpOr_7"
+        },
+        "essences": {
+            "name": "PurpOr_7"
+        },
+        "flasks": {
+            "name": "PurpOr_7"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "PurpOr_7"
+        },
+        "skill_gems": {
+            "name": "PurpOr_7"
+        },
+        "life_flasks": {
+            "name": "PurpOr_7"
+        },
+        "mana_flasks": {
+            "name": "PurpOr_7"
+        },
+        "maps_tiered": {
+            "name": "PurpOr_7",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "PurpOr_7"
+        },
+        "oils": {
+            "name": "PurpOr_7"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "PurpOr_7"
+        }
+    },
+    "whitelist": {}
+}
