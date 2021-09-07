@@ -156,7 +156,8 @@ async def get_overviews(
 async def initialize_insights_cache(
     league: str,
     cache: typing.Optional[diskcache.Cache] = None,
-    cache_expire: int = 60 * 60,
+    cache_expire: int = 60 * 60 * 5,
+    no_sync: bool = False,
 ) -> diskcache.Cache:
     """Fetch and cache economy insights as needed."""
     if cache is None:
@@ -164,17 +165,19 @@ async def initialize_insights_cache(
     # log = logger.bind(league=league, cache_dir=cache.directory)
     log = logger.bind(league=league)
     log.info("cache.initialize", league=league, dir=cache.directory)
-    stale_types = []
+    missing_overviews = []
     for t in get_all_insights_types():
         overview = cache.get(f"insights:{t.value}")
         if overview is None:
             log.debug("cache.miss", type=t.value)
-            stale_types.append(t)
+            missing_overviews.append(t)
         else:
             log.debug("cache.hit", type=t.value)
+    if missing_overviews and no_sync:
+        raise errors.WraeblastError("insights cache is incomplete")
     async for t, overview in get_overviews(
         league=league,
-        types=stale_types,
+        types=missing_overviews,
     ):
         log.info(
             "overview.response",
@@ -194,6 +197,7 @@ async def initialize_filter_context(
     league: typing.Optional[str] = None,
     cache: typing.Optional[diskcache.Cache] = None,
     cache_expire: int = 60 * 60 * 5,
+    no_sync: bool = False,
 ) -> "ItemFilterContext":
     """Create an ``ItemFilterContext`` from cached economy data."""
     if initialize_cache:
@@ -203,6 +207,7 @@ async def initialize_filter_context(
             league=league,
             cache=cache,
             cache_expire=cache_expire,
+            no_sync=no_sync,
         )
     elif cache is None:
         cache = _cache

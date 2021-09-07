@@ -7,7 +7,9 @@ import re
 import string
 import typing
 
+import backoff
 import boto3
+import botocore.exceptions
 import matplotlib.colors
 import pandas as pd
 import pydub
@@ -236,6 +238,7 @@ def tts_pyttsx3(
     engine.runAndWait()
 
 
+@backoff.on_exception(backoff.expo, botocore.exceptions.ClientError)
 def tts_polly(
     s: str,
     key: str,
@@ -329,11 +332,6 @@ def tts(
     filepath = pathlib.Path(output_path) / pathlib.Path(prefix) / filename
     if overwrite or not filepath.exists():
         filepath.parent.mkdir(parents=True, exist_ok=True)
-        logger.info(
-            "tts.generating",
-            filename=filename,
-            aws_enabled=aws_enabled,
-        )
         if aws_enabled:
             tts_polly(
                 s=s,

@@ -53,11 +53,12 @@ class RenderFilterCommand(CommandMixin, cleo.Command):
 
     render_filter
         {file : filter template file}
-        {--O|--options-file= : Options JSON file}
-        {--d|--output-directory=. : Output directory}
-        {--i|--keep-intermediate : Keep rendered intermediate template}
+        {--O|options-file= : Options JSON file}
+        {--d|output-directory=. : Output directory}
+        {--i|keep-intermediate : Keep rendered intermediate template}
         {--o|output= : Output file}
         {--l|league=TEMP : Current league name}
+        {--N|no-sync : Prevents automatic insights syncing}
         {--p|preset=default : Preset name}
 
     """
@@ -85,7 +86,10 @@ class RenderFilterCommand(CommandMixin, cleo.Command):
 
         loop = asyncio.get_event_loop()
         filter_context = loop.run_until_complete(
-            insights.initialize_filter_context(league=league),
+            insights.initialize_filter_context(
+                league=league,
+                no_sync=True,
+            ),
         )
         if options_filename:
             with open(options_filename) as f:

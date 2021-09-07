@@ -13,7 +13,6 @@ jobs:
           python-version: "3.x"
       - name: Install dependencies
         run: |
-          sudo apt-get update -y
           sudo apt-get install espeak ffmpeg -y
           python -m pip install --upgrade poetry
           poetry install
