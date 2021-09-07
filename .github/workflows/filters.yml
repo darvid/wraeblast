@@ -5,28 +5,95 @@ on:
     - cron: "0 0 * * *"
   workflow_dispatch:
 jobs:
-  build:
-    name: Render all filters
+  prep-filter-options:
+    name: Prepare batch filter jobs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Prepare list of filter options
+        run: |
+          sudo apt-get install jq
+          echo "::set-output name=matrix::$(bash ./filters/list.sh ./filters 109 | jq -R . | jq -cs .)"
+        id: set-matrix
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+  sync-data:
+    name: Sync economy insights and TTS data
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
-        with:
-          python-version: "3.9"
       - name: Install dependencies
         run: |
-          sudo apt-get update -y
-          sudo apt-get install espeak ffmpeg -y
+          sudo apt-get install awscli espeak ffmpeg -y
           python -m pip install --upgrade poetry
           poetry install
-      - name: Build filters
+      - name: Sync economy data
+        run: poetry run wraeblast sync_insights
+      - name: Sync TTS synthesized alert sounds
         run: |
-          poetry run ./filters/build.sh
+          mkdir -p output/FilterSounds/tts
+          aws s3 sync s3://${{ env.WRAEBLAST_BUCKET_TTS }} ./output/FilterSounds/tts/
+          ls -l ./output/FilterSounds/tts/
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: us-east-1
+          WRAEBLAST_BUCKET_TTS: wraeblast-tts
+      - name: Archive insights cache and TTS
+        uses: actions/upload-artifact@v2
+        with:
+          name: wraeblast_data
+          path: |
+            .insights_cache/
+            output/
+          retention-days: 1
+
+  build-filters:
+    name: Render all filters
+    runs-on: ubuntu-latest
+    needs: [prep-filter-options, sync-data]
+    strategy:
+      matrix:
+        python-version: ["3.9"]
+        filter-options: ${{fromJson(needs.prep-filter-options.outputs.matrix)}}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+      - name: Install dependencies
+        run: |
+          sudo apt-get install espeak ffmpeg jq -y
+          python -m pip install --upgrade poetry
+          poetry install
+      - name: Download insights and TTS cache
+        uses: actions/download-artifact@v2
+        with:
+          name: wraeblast_data
+      - name: Build filters
+        run: |
+          poetry run ./filters/build.sh ${{ matrix.filter-options }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_RETRY_MODE: adaptive
+      - name: Archive filters
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            output/**
+          retention-days: 5
+
+  release:
+    name: Upload artifacts and release
+    runs-on: ubuntu-latest
+    needs: build-filters
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v2
       - name: Get current date
         id: date
         run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
@@ -39,3 +106,11 @@ jobs:
           retention-days: 5
         env:
           RELEASE_NAME: nightly-release-${{ steps.date.outputs.date }}
+      - uses: meeDamian/github-release@2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_NAME }}
+        env:
+          RELEASE_TAG: ${{ steps.date.outputs.date }}
+          RELEASE_NAME: nightly-filters-${{ steps.date.outputs.date }}
