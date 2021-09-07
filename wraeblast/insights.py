@@ -193,7 +193,7 @@ async def initialize_filter_context(
     initialize_cache: bool = True,
     league: typing.Optional[str] = None,
     cache: typing.Optional[diskcache.Cache] = None,
-    cache_expire: int = 60 * 60,
+    cache_expire: int = 60 * 60 * 5,
 ) -> "ItemFilterContext":
     """Create an ``ItemFilterContext`` from cached economy data."""
     if initialize_cache:

@@ -252,7 +252,8 @@ def tts_polly(
         logger.info("tts.downloading_cached", key=key)
         s3_client.download_file(bucket_name, key, str(dest))
         return
-    logger.info("tts.generating", polly=True, key=key)
+    else:
+        logger.info("tts.generating", polly=True, key=key)
     polly_client = boto3.client("polly")
     response = polly_client.synthesize_speech(
         Engine=engine,

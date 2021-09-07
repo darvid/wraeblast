@@ -408,7 +408,7 @@ class ItemFilter(pydantic.BaseModel):
             for style in styles:
                 rule.apply_style(style, replace=True)
 
-    def remove_hidden_rules(self) -> int:
+    def remove_hidden_rules(self) -> None:
         """Remove all hidden rules."""
         self.rules = [
             rule for rule in self.rules if rule.visibility == Visibility.SHOW
