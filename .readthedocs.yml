@@ -1,0 +1,14 @@
+version: 2
+
+mkdocs:
+  configuration: mkdocs.yml
+
+build:
+  image: testing
+
+python:
+  version: "3.9"
+  install:
+    - requirements: docs/requirements.txt
+    - method: pip
+      path: .
