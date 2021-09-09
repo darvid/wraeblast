@@ -10,6 +10,9 @@
   <a href="https://github.com/darvid/wraeblast/actions/workflows/filters.yml">
     <img title="Filters workflow status" src="https://github.com/darvid/wraeblast/actions/workflows/filters.yml/badge.svg?event=workflow_dispatch">
   </a>
+  <a href="https://wraeblast.readthedocs.io">
+    <img title="Library Documentation" src="https://readthedocs.org/projects/wraeblast/badge/?version=latest">
+  </a>
 </p>
 <p align="center">
   A library for interfacing with
