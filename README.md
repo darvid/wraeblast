@@ -3,43 +3,52 @@
   <br>
 </h1>
 
-<h4 align="center">
-    A library for interfacing with
-    <a href="https://pathofexile.com">Path of Exile</a> game and
-    <a href="https://poe.ninja">economy data</a>, and accompanying tools.
-</h4>
-
-The ultimate goal of this library is to provide a rich API for
-developing Path of Exile tools and applications, as well as facilitate
-data science and visualization.
+<p align="center">
+  <a href="https://github.com/darvid/wraeblast/actions/workflows/library.yml">
+    <img title="Library workflow status" src="https://github.com/darvid/wraeblast/actions/workflows/library.yml/badge.svg">
+  </a>
+  <a href="https://github.com/darvid/wraeblast/actions/workflows/filters.yml">
+    <img title="Filters workflow status" src="https://github.com/darvid/wraeblast/actions/workflows/filters.yml/badge.svg?event=workflow_dispatch">
+  </a>
+</p>
+<p align="center">
+  A library for interfacing with
+  <a href="https://pathofexile.com">Path of Exile</a> game and
+  <a href="https://poe.ninja">economy data</a>, and a
+  <a href="https://github.com/darvid/wraeblast/releases">set of item
+  filters</a> geared towards trade league players.
+</p>
 
 <!--ts-->
    * [Filter Generation](#filter-generation)
-      * [Features](#features)
+      * [Framework Features](#framework-features)
+      * [Filter Features](#filter-features)
+         * [Demos](#demos)
+         * [Installation](#installation)
       * [<del>Rationale</del> Development Manifesto](#rationale-development-manifesto)
-      * [Showcase](#showcase)
       * [Architecture](#architecture)
       * [Usage](#usage)
       * [Roadmap](#roadmap)
    * [[REDACTED]](#redacted)
 
-<!-- Added by: david, at: Thu 02 Sep 2021 10:43:01 PM EDT -->
+<!-- Added by: david, at: Wed 08 Sep 2021 11:38:07 PM EDT -->
 
 <!--te-->
 
 ## Filter Generation
 
 **Wraeblast** provides an **experimental**, feature-rich
-[item filter][1] development framework and toolkit.
+[item filter][1] development framework and toolkit, as well as a
+dogfooded [trade league filter][12].
 
-⚠️ **DISCLAIMER**: ⚠️ Any filters distributed by this project are
-*examples* and not currently supported, maintained, or guaranteed to be
-updated. Please use [FilterBlade][7] if you're looking for a loot filter
-to configure and download.
+⚠️ **DISCLAIMER**: ⚠️ This is an experimental, proof-of-concept project,
+and the author is not responsible for any loss of currency or efficiency
+as a result of using this project's filters. Please use [FilterBlade][7]
+for regular gameplay unless you're brave enough to deal with a pre-alpha
+filter.
 
-### Features
+### Framework Features
 
-* Complete standard item filter grammar parsing support.
 * Economy insights API powered by [poe.ninja][2]
   * Integration with [pandas][3] for data normalization and analysis
   * Local caching and rate limiting
@@ -57,64 +66,90 @@ to configure and download.
 * [Matplotlib][5] [colormap][6] integration, enabling procedural
   generation of *item*-based (not just tier-based like many popular
   community filters) filter colors.
+* ...and many other technical features under the hood.
+
+### Filter Features
+
+* 📊 **Quantile based variants** for efficient farming.[†](#f1)
+
+  Currently provides two variants: **D2** (2nd decile) and **QU4** (4th
+  quintile). Additional quantiles will probably be included in nightly
+  releases, depending on feedback and experimentation.
+* 🌌 **54 colormaps** (108 if you include reversed colormaps, indicated
+  by an `_r` prefix) included *per quantile variant*.
+
+  There are even more colormap palettes available, it would just be too
+  cost prohibitive to include them all at present. See the
+  [Palettable][13] documentation for colormap previews (only sequential
+  colormaps are used).
+
+  Some form of item filter preview may be added as a feature in the
+  future, but for now either refer to the documentation or just try them
+  out in game.
+* 🔊 **[AWS Polly][14] Neural Text-To-Speech ([NTTS][15])** powered
+  synthesized alert sounds for ✨all✨ valuable filter rules (quantile
+  dependent).
+
+  Get instant, **aural** feedback for currency, fragments, skill gems,
+  cluster jewels, and more. Anything tracked by [poe.ninja][2] can be
+  supported by TTS.
+
+  Filter sounds for relevant items are also generated for varying stack
+  sizes, for more accurate chaos value approximations.
+
+  The `Aria` (New Zealand English, appropriately) voice is currently the
+  default for the trade league filters included with this project, but
+  any voice supported by AWS Polly can be used when developing new
+  filters.
+
+
+<a name="f1">†</a> *TLDR:* think of quantiles like strictness, with an
+arguably better ranking of item and currency value in a trade league
+than hard-coded tiers.
+
+#### Demos
+
+* [20% deli, beyond+nemesis map](https://streamable.com/ppi4sd) with `D3` quantile,
+  `TealGrn_r` colormap filter.
+* [Expedition artifacts](https://streamable.com/8ng40x), also using
+  `TealGrn_r` colormap filter.
+* [Various drops](https://streamable.com/kqv021) with `QU4` quantile,
+  `SunsetDark_r` colormap filter.
+* *More coming soon*
+
+#### Installation
+
+Download the filter variant(s) of your choice from the [releases][16],
+as well as the latest, compressed TTS filter sounds. Extract both
+the `.filter` and the `FilterSounds` directory to your `Path of Exile`
+directory.
+
+Filter syncing is currently not supported, and would be largely useless
+regardless without a way to sync filter sound files.
+
+Note that **updating the filter also requires updating the TTS files**,
+and you can simply choose to overwrite existing files every time, or
+delete the entire TTS folder before installing the latest version.
 
 ### ~~Rationale~~ Development Manifesto
 
-* Path of Exile's current loot system *requires* complex filters 🤦
+* Path of Exile's current loot system *requires* complex filters for
+  efficient gameplay 🤦
 * Complex filters *require* a 🔨 filter generation/templating layer 🔨
   (this is exactly what [NeverSink][8] has done)
-* Many community maintained filters (including NeverSink) are
+* Many community maintained filters (including [NeverSink's][8]) are
   ✨ awesome ✨ and work well for the majority of the playerbase,
   but have some shortcomings:
   * 🚀 Über strict isn't always über enough for softcore juiced map
-    blasters
+    blasters (filter *"strictness"* in general is a trap)
   * 🌈 Filter customization is somewhat limiting and tedious to do
-    through a web interface
-  * 📈 Economy-based presets and filters leverage a very small subset
-    of the available data from [poe.ninja][2]
-  * 👕 Most filters tend to adopt a one-size-fits-all strategy, with
-    a plethora of rules for _all_ the content in the game, visually
-    distinct colors but impossible to remember for most players
-  * 🔊 Configuring custom sounds is a chore
-* What if we had a filter _framework_ that was developer-oriented (for
-  now), data-driven, and complexity _reducing_?
-
-  Some ground rules:
-
-  * **Wraeblast is not a filter.** An example filter is included, but
-    is _not_ the focus of this project.
-  * Don't cater to everyone. Provide the tools for **developers
-    first**, players second, to craft the filters based on play style,
-    league (SC/HC), and current progression.
-  * Don't re-invent the wheel: use existing, well documented, industry
-    standard tools, markup language formats, and libraries like Jinja2,
-    YAML, matplotlib, etc. rather than baking new ones.
-
-### Showcase
-
-Click the thumbnails to ▶️ play
-
-* ✨ Automatically generated text-to-speech filter sounds ✨
-
-  ``` yaml+jinja
-  # Cluster jewels
-  # ...
-  - conditions:
-    # ...
-    actions:
-      # ...
-      {%- if item.chaos_value >= 10 %}
-      CustomAlertSound: '{{ tts("{} c".format(round_down(item.chaos_value, 10))) }}'
-      {%- endif %}
-    tags:
-    # ...
-  ```
-
-  [<img src="https://i.imgur.com/qWcVNVz.jpg">][9]
-
-* ✨ Colormap demo ✨
-
-  [<img src="https://i.imgur.com/GeV3yZu.jpg">][10]
+    through a web interface (*loot filters are code*)
+  * 📈 Economy-based presets and filters leverage a small subset of the
+    available data from [poe.ninja][2]
+  * 🛁 Filter rules take the kitchen sink approach and include a large
+    amount of rules for low-value recipes and items
+  * 🔊 Default alert sounds and sound rules are usually sparse, and
+    adding custom sounds is a time-consuming process
 
 ### Architecture
 
@@ -164,6 +199,8 @@ command line usage.
 * [ ] Unit tests and documentation
 * [ ] Filter preview image generation
 * [ ] Filter compression/deduping of rules
+* [ ] Investigate auto-updating, but yet another downloadable tool to
+      do it is out of the question (probably)
 * [ ] Integration with [poeprofit][11] (i.e. dedicated styles and sounds
   for profitable strategies)
 * [ ] Web frontend for downloading up-to-date filters (sans
@@ -187,3 +224,8 @@ this project in the near future.
 [9]: https://streamable.com/dt2j1b
 [10]: https://streamable.com/lxee3z
 [11]: https://poeprofit.com/
+[12]: https://github.com/darvid/wraeblast/tree/main/filters/trade
+[13]: https://jiffyclub.github.io/palettable/#finding-palettes
+[14]: https://aws.amazon.com/polly/
+[15]: https://docs.aws.amazon.com/polly/latest/dg/NTTS-main.html
+[16]: https://github.com/darvid/wraeblast/releases
