@@ -56,5 +56,3 @@ plugins:
       watch:
         - wraeblast
   - search
-  - minify:
-      minify_html: true
