@@ -1,0 +1,5 @@
+mkdocs-material==7.1.11
+mkdocstrings==0.15.2
+pymdown-extensions==8.2
+mkdocs-literate-nav==0.4.0
+mkdocs-minify-plugin==0.4.0
