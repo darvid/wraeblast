@@ -1,4 +1,5 @@
 import enum
+import re
 import typing
 
 import pydantic
@@ -26,15 +27,15 @@ class ClusterJewelMinorPassive(enum.Enum):
     CHANCE_TO_DODGE_ATTACKS = "Chance to Dodge Attacks"
     CHANNELLING_SKILL_DAMAGE = "Channelling Skill Damage"
     CHAOS_DAMAGE = "Chaos Damage"
-    CHAOS_DOT_MULTIPLIER = "Chaos Damage over Time Multiplier"
+    CHAOS_DOT = "Chaos Damage over Time"
     CHAOS_RESISTANCE = "Chaos Resistance"
     COLD_DAMAGE = "Cold Damage"
-    COLD_DOT_MULTIPLIER = "Cold Damage over Time Multiplier"
+    COLD_DOT = "Cold Damage over Time"
     COLD_RESISTANCE = "Cold Resistance"
     CRITICAL_CHANCE = "Critical Chance"
     CURSE_EFFECT = "Curse Effect"
     DAGGER_AND_CLAW_DAMAGE = "Dagger and Claw Damage"
-    DOT_MULTIPLIER = "Damage over Time Multiplier"
+    DOT = "Damage over Time"
     HERALD_DAMAGE = "Damage while you have a Herald"
     TWO_HAND_DAMAGE = "Damage with Two Handed Melee Weapons"
     DEXTERITY = "Dexterity"
@@ -44,7 +45,7 @@ class ClusterJewelMinorPassive(enum.Enum):
     EVASION = "Evasion"
     EXERTED_ATTACK_DAMAGE = "Exerted Attack Damage"
     FIRE_DAMAGE = "Fire Damage"
-    FIRE_DOT_MULTIPLIER = "Fire Damage over Time Multiplier"
+    FIRE_DOT = "Fire Damage over Time"
     FIRE_RESISTANCE = "Fire Resistance"
     FLASK_DURATION = "Flask Duration"
     INTELLIGENCE = "Intelligence"
@@ -58,7 +59,7 @@ class ClusterJewelMinorPassive(enum.Enum):
     MINION_HERALD_DAMAGE = "Minion Damage while you have a Herald"
     MINION_LIFE = "Minion Life"
     PHYSICAL_DAMAGE = "Physical Damage"
-    PHYSICAL_DOT_MULTIPLIER = "Physical Damage over Time Multiplier"
+    PHYSICAL_DOT = "Physical Damage over Time"
     PROJECTILE_DAMAGE = "Projectile Damage"
     SPELL_DAMAGE = "Spell Damage"
     STRENGTH = "Strength"
@@ -94,134 +95,135 @@ class SocketColor(enum.Enum):
 SocketGroupList = list[tuple[SocketColor, int]]
 
 cluster_jewel_passives_to_names = {
-    ClusterJewelMinorPassive.AREA_DAMAGE: "10% increased Area Damage",
-    ClusterJewelMinorPassive.ARMOUR: "15% increased Armour",
-    ClusterJewelMinorPassive.ATTACK_DAMAGE: "10% increased Attack Damage",
+    ClusterJewelMinorPassive.AREA_DAMAGE: r"\d+% increased Area Damage",
+    ClusterJewelMinorPassive.ARMOUR: r"\d+% increased Armour",
+    ClusterJewelMinorPassive.ATTACK_DAMAGE: r"\d+% increased Attack Damage",
     ClusterJewelMinorPassive.ATTACK_DAMAGE_WHILE_DUAL_WIELDING: (
-        "12% increased Attack Damage while Dual Wielding"
+        r"\d+% increased Attack Damage while Dual Wielding"
     ),
     ClusterJewelMinorPassive.ATTACK_DAMAGE_WHILE_SHIELDING: (
-        "12% increased Attack Damage while holding a Shield"
+        r"\d+% increased Attack Damage while holding a Shield"
     ),
     ClusterJewelMinorPassive.AURA_EFFECT: (
-        "6% increased effect of Non-Curse Auras from your Skills"
+        r"\d+% increased effect of Non-Curse Auras from your Skills"
     ),
     ClusterJewelMinorPassive.AXE_AND_SWORD_DAMAGE: (
-        "Axe Attacks deal 12% increased Damage with Hits and Ailments, "
-        "Sword Attacks deal 12% increased Damage with Hits and Ailments"
+        r"Axe Attacks deal \d+% increased Damage with Hits and Ailments, "
+        r"Sword Attacks deal \d+% increased Damage with Hits and Ailments"
     ),
     ClusterJewelMinorPassive.BOW_DAMAGE: (
-        "12% increased Damage with Bows, "
-        "12% increased Damage Over Time with Bow Skills"
+        r"\d+% increased Damage with Bows, "
+        r"\d+% increased Damage Over Time with Bow Skills"
     ),
-    ClusterJewelMinorPassive.BRAND_DAMAGE: "12% increased Brand Damage",
+    ClusterJewelMinorPassive.BRAND_DAMAGE: r"\d+% increased Brand Damage",
     ClusterJewelMinorPassive.CHANCE_TO_BLOCK_ATTACK_DAMAGE: (
-        "1% Chance to Block Attack Damage"
+        r"\d+% Chance to Block Attack Damage"
     ),
     ClusterJewelMinorPassive.CHANCE_TO_BLOCK_SPELL_DAMAGE: (
-        "1% Chance to Block Spell Damage"
+        r"\d+% Chance to Block Spell Damage"
     ),
     ClusterJewelMinorPassive.CHANCE_TO_DODGE_ATTACKS: (
-        "1% chance to Dodge Attack Hits"
+        r"\d+% chance to Dodge Attack Hits"
     ),
     ClusterJewelMinorPassive.CHANNELLING_SKILL_DAMAGE: (
-        "Channelling Skills deal 12% increased Damage"
+        r"Channelling Skills deal \d+% increased Damage"
     ),
-    ClusterJewelMinorPassive.CHAOS_DAMAGE: "12% increased Chaos Damage",
-    ClusterJewelMinorPassive.CHAOS_DOT_MULTIPLIER: (
-        "+4% to Chaos Damage over Time Multiplier"
-    ),
-    ClusterJewelMinorPassive.CHAOS_RESISTANCE: "+12% to Chaos Resistance",
-    ClusterJewelMinorPassive.COLD_DAMAGE: "12% increased Cold Damage",
-    ClusterJewelMinorPassive.COLD_DOT_MULTIPLIER: (
-        "+4% to Cold Damage over Time Multiplier"
-    ),
-    ClusterJewelMinorPassive.COLD_RESISTANCE: "+15% to Cold Resistance",
+    ClusterJewelMinorPassive.CHAOS_DAMAGE: r"\d+% increased Chaos Damage",
+    ClusterJewelMinorPassive.CHAOS_DOT: (r"\+\d+% to Chaos Damage over Time"),
+    ClusterJewelMinorPassive.CHAOS_RESISTANCE: r"\+\d+% to Chaos Resistance",
+    ClusterJewelMinorPassive.COLD_DAMAGE: r"\d+% increased Cold Damage",
+    ClusterJewelMinorPassive.COLD_DOT: (r"\+\d+% to Cold Damage over Time"),
+    ClusterJewelMinorPassive.COLD_RESISTANCE: r"\+\d+% to Cold Resistance",
     ClusterJewelMinorPassive.CRITICAL_CHANCE: (
-        "15% increased Critical Strike Chance"
+        r"\d+% increased Critical Strike Chance"
     ),
     ClusterJewelMinorPassive.CURSE_EFFECT: (
-        "5% increased Effect of your Curses"
+        r"\d+% increased Effect of your Curses"
     ),
     ClusterJewelMinorPassive.DAGGER_AND_CLAW_DAMAGE: (
-        "Claw Attacks deal 12% increased Damage with Hits and Ailments, "
-        "Dagger Attacks deal 12% increased Damage with Hits and Ailments"
+        r"Claw Attacks deal \d+% increased Damage with Hits and Ailments, "
+        r"Dagger Attacks deal \d+% increased Damage with Hits and Ailments"
     ),
-    ClusterJewelMinorPassive.DOT_MULTIPLIER: (
-        "+4% to Damage over Time Multiplier"
-    ),
+    ClusterJewelMinorPassive.DOT: r"\d+% increased Damage over Time",
     ClusterJewelMinorPassive.HERALD_DAMAGE: (
-        "10% increased Damage while affected by a Herald"
+        r"\d+% increased Damage while affected by a Herald"
     ),
     ClusterJewelMinorPassive.TWO_HAND_DAMAGE: (
-        "12% increased Damage with Two Handed Weapons"
+        r"\d+% increased Damage with Two Handed Weapons"
     ),
-    ClusterJewelMinorPassive.DEXTERITY: "+10 to Dexterity",
+    ClusterJewelMinorPassive.DEXTERITY: r"\+\d+ to Dexterity",
     ClusterJewelMinorPassive.AILMENT_EFFECT: (
-        "10% increased Effect of Non-Damaging Ailments"
+        r"\d+% increased Effect of Non-Damaging Ailments"
     ),
     ClusterJewelMinorPassive.ELEMENTAL_DAMAGE: (
-        "10% increased Elemental Damage"
+        r"\d+% increased Elemental Damage"
     ),
     ClusterJewelMinorPassive.ENERGY_SHIELD: (
-        "6% increased maximum Energy Shield"
+        r"\d+% increased maximum Energy Shield"
     ),
-    ClusterJewelMinorPassive.EVASION: "15% increased Evasion Rating",
+    ClusterJewelMinorPassive.EVASION: r"\d+% increased Evasion Rating",
     ClusterJewelMinorPassive.EXERTED_ATTACK_DAMAGE: (
-        "Exerted Attacks deal 20% increased Damage"
+        r"Exerted Attacks deal 20% increased Damage"
     ),
-    ClusterJewelMinorPassive.FIRE_DAMAGE: "12% increased Fire Damage",
-    ClusterJewelMinorPassive.FIRE_DOT_MULTIPLIER: (
-        "+4% to Fire Damage over Time Multiplier"
+    ClusterJewelMinorPassive.FIRE_DAMAGE: r"\d+% increased Fire Damage",
+    ClusterJewelMinorPassive.FIRE_DOT: (
+        r"(\+\d+% to Fire Damage over Time" r"|\d+% increased Burning Damage)"
     ),
-    ClusterJewelMinorPassive.FIRE_RESISTANCE: "+15% to Fire Resistance",
+    ClusterJewelMinorPassive.FIRE_RESISTANCE: r"\+\d+% to Fire Resistance",
     ClusterJewelMinorPassive.FLASK_DURATION: (
-        "6% increased Flask Effect Duration"
+        r"\d+% increased Flask Effect Duration"
     ),
-    ClusterJewelMinorPassive.INTELLIGENCE: "+10 to Intelligence",
-    ClusterJewelMinorPassive.LIFE: "4% increased maximum Life",
+    ClusterJewelMinorPassive.INTELLIGENCE: r"\+\d+ to Intelligence",
+    ClusterJewelMinorPassive.LIFE: r"\d+% increased maximum Life",
     ClusterJewelMinorPassive.FLASK_RECOVERY: (
-        "10% increased Life Recovery from Flasks, "
-        "10% increased Mana Recovery from Flasks"
+        r"\d+% increased Life Recovery from Flasks, "
+        r"\d+% increased Mana Recovery from Flasks"
     ),
-    ClusterJewelMinorPassive.LIGHTNING_DAMAGE: "12% increased Lightning Damage",
-    ClusterJewelMinorPassive.LIGHTNING_RESISTANCE: "+15% to Lightning Resistance",
+    ClusterJewelMinorPassive.LIGHTNING_DAMAGE: r"\d+% increased Lightning Damage",
+    ClusterJewelMinorPassive.LIGHTNING_RESISTANCE: r"\+\d+% to Lightning Resistance",
     ClusterJewelMinorPassive.MACE_STAFF_DAMAGE: (
-        "Staff Attacks deal 12% increased Damage with Hits and Ailments, "
-        "Mace or Sceptre Attacks deal 12% increased Damage with Hits "
-        "and Ailments"
+        r"Staff Attacks deal \d+% increased Damage with Hits and Ailments, "
+        r"Mace or Sceptre Attacks deal \d+% increased Damage with Hits "
+        r"and Ailments"
     ),
-    ClusterJewelMinorPassive.MANA: "6% increased maximum Mana",
+    ClusterJewelMinorPassive.MANA: r"\d+% increased maximum Mana",
     ClusterJewelMinorPassive.MINION_DAMAGE: (
-        "Minions deal 10% increased Damage"
+        r"Minions deal \d+% increased Damage"
     ),
     ClusterJewelMinorPassive.MINION_HERALD_DAMAGE: (
-        "Minions deal 10% increased Damage while you are "
-        "affected by a Herald"
+        r"Minions deal \d+% increased Damage while you are "
+        r"affected by a Herald"
     ),
     ClusterJewelMinorPassive.MINION_LIFE: (
-        "Minions have 12% increased maximum Life"
+        r"Minions have \d+% increased maximum Life"
     ),
-    ClusterJewelMinorPassive.PHYSICAL_DAMAGE: "12% increased Physical Damage",
-    ClusterJewelMinorPassive.PHYSICAL_DOT_MULTIPLIER: (
-        "+4% to Physical Damage over Time Multiplier"
+    ClusterJewelMinorPassive.PHYSICAL_DAMAGE: r"\d+% increased Physical Damage",
+    ClusterJewelMinorPassive.PHYSICAL_DOT: (
+        r"\+\d+% to Physical Damage over Time"
     ),
     ClusterJewelMinorPassive.PROJECTILE_DAMAGE: (
-        "10% increased Projectile Damage"
+        r"\d+% increased Projectile Damage"
     ),
-    ClusterJewelMinorPassive.SPELL_DAMAGE: "10% increased Spell Damage",
-    ClusterJewelMinorPassive.STRENGTH: "+10 to Strength",
-    ClusterJewelMinorPassive.TOTEM_DAMAGE: "12% increased Totem Damage",
+    ClusterJewelMinorPassive.SPELL_DAMAGE: r"\d+% increased Spell Damage",
+    ClusterJewelMinorPassive.STRENGTH: r"\+\d+ to Strength",
+    ClusterJewelMinorPassive.TOTEM_DAMAGE: r"\d+% increased Totem Damage",
     ClusterJewelMinorPassive.TRAP_AND_MINE_DAMAGE: (
-        "12% increased Trap Damage, 12% increased Mine Damage"
+        r"\d+% increased Trap Damage, \d+% increased Mine Damage"
     ),
     ClusterJewelMinorPassive.WAND_DAMAGE: (
-        "Wand Attacks deal 12% increased Damage with Hits and Ailments"
+        r"Wand Attacks deal \d+% increased Damage with Hits and Ailments"
     ),
 }
 cluster_jewel_names_to_passives = {
     v: k for k, v in cluster_jewel_passives_to_names.items()
 }
+
+
+def get_cluster_jewel_passive(name: str) -> ClusterJewelMinorPassive:
+    for passive, pattern in cluster_jewel_passives_to_names.items():
+        if re.match(pattern, name):
+            return passive
+    raise KeyError(name)
 
 
 class SocketGroup(pydantic.BaseModel):

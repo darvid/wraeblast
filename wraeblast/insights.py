@@ -445,8 +445,34 @@ def build_economy_overview_dataframe(
     #         inplace=True,
     #     )
     for name_key in ("currency_type_name", "skill_gem_name"):
-        if name_key in df:
+        if name_key in df.columns:
             df["name"] = df[name_key]
+
+    if "base_type" in df.columns and len(
+        df[df["base_type"].str.contains("Cluster Jewel", na=False)]
+    ):
+        try:
+            df["cluster_jewel_enchantment"] = df.name.map(
+                lambda name: constants.get_cluster_jewel_passive(name).value
+            )
+            df["cluster_jewel_passives_min"] = df.trade_info.apply(
+                lambda trade_info: [
+                    ti
+                    for ti in trade_info
+                    if ti["mod"] == "enchant.stat_3086156145"
+                ][0]["min"]
+            )
+            df["cluster_jewel_passives_max"] = df.trade_info.apply(
+                lambda trade_info: [
+                    ti
+                    for ti in trade_info
+                    if ti["mod"] == "enchant.stat_3086156145"
+                ][0]["max"]
+            )
+            df["cluster_jewel_passives"] = df["cluster_jewel_passives_min"]
+        except (KeyError, IndexError):
+            # TODO: Find a way to filter out unique cluster jewels better
+            pass
 
     # Allow dot-notation access to item names, since name is reserved
     df["item_name"] = df["name"]

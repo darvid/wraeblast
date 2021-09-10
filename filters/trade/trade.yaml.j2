@@ -1121,13 +1121,20 @@ rules:
   {%- for index, row in ctx.cluster_jewels: %}
   {%- if row.cluster_jewel_enchantment: %}
   - conditions:
-      rowLevel: {'>=': '{{ row.level_required }}'}
+      ItemLevel: {'>=': '{{ row.level_required }}'}
       Rarity: {'<=': Rare}
-      EnchantmentPassiveNode: '{{ row.cluster_jewel_enchantment }}'
-      EnchantmentPassiveNum: '{{ row.cluster_jewel_passives }}'
+      EnchantmentPassiveNode: {'==': '{{ row.cluster_jewel_enchantment }}'}
+      EnchantmentPassiveNum: {'==': '{{ row.cluster_jewel_passives }}'}
     actions:
-      {{ set_colors_from_colormap(options.colormaps.cluster_jewels, row.chaos_value) }}
-      {{- set_tts_alertsound(row, thresholds=options.thresholds.cluster_jewels) }}
+      {{ set_colors_from_colormap(
+            options.colormaps.cluster_jewels,
+            row.chaos_value,
+      ) }}
+      {{- set_tts_alertsound(
+            row,
+            "Cluster Jewel",
+            thresholds=options.thresholds.cluster_jewels,
+      ) }}
     tags:
       - cluster_jewels
       {{- set_tags(
