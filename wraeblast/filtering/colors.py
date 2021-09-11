@@ -15,12 +15,6 @@ import palettable.palette
 
 ColorType_RGB = tuple[float, float, float]
 ColorType_RGBA = tuple[float, float, float, float]
-ColorType = typing.Union[
-    colour.Color,
-    ColorType_RGB,
-    ColorType_RGBA,
-    str,
-]
 
 _palettable_modules = (
     palettable.cartocolors.diverging,
@@ -123,7 +117,14 @@ class Color(colour.Color):
 
     def __init__(
         self,
-        color: ColorType = None,
+        color: typing.Optional[
+            typing.Union[
+                colour.Color,
+                ColorType_RGB,
+                ColorType_RGBA,
+                str,
+            ]
+        ] = None,
         *args,
         alpha: float = 1,
         **kwargs,

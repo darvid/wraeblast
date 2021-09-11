@@ -18,6 +18,10 @@ from wraeblast import constants, errors
 from wraeblast.filtering.parsers.extended import env
 
 
+if typing.TYPE_CHECKING:
+    from wraeblast.filtering.parsers.extended import config
+
+
 logger = structlog.get_logger()
 
 
@@ -80,35 +84,6 @@ def get_quantile_tuple(q: str) -> tuple[str, int]:
         return ("quartile", int(q[1:]))
     else:
         raise RuntimeError(f"invalid quantile: {q}")
-
-
-def group_items_by_quantile(
-    df: pd.DataFrame,
-    groups: list[str],
-    query: str = None,
-    thresholds: "config.ThresholdOptions" = None,
-) -> list[tuple[typing.Any, ...]]:
-    """Group an item overview dataframe by chaos value quantiles."""
-    if thresholds is not None:
-        if query:
-            query += " and "
-        query += thresholds.get_dataframe_query()
-    df_filtered = df.query(query) if query else df
-    gb = df_filtered.groupby(groups)
-    return list(gb)
-
-
-def group_items_by_influence_and_quantile(
-    df: pd.DataFrame,
-    max_influences: int = 1,
-    thresholds: "config.ThresholdOptions" = None,
-) -> SingleInfluencedQcutItemsType:
-    """Group an item overview dataframe by value quantile and influence."""
-    return group_items_by_quantile(
-        df=df,
-        query=f"influences.str.len() <= {max_influences}",
-        thresholds=thresholds,
-    )  # type: ignore
 
 
 async def get_economy_overview(
@@ -448,8 +423,11 @@ def build_economy_overview_dataframe(
         if name_key in df.columns:
             df["name"] = df[name_key]
 
-    if "base_type" in df.columns and len(
-        df[df["base_type"].str.contains("Cluster Jewel", na=False)]
+    if (
+        "base_type" in df.columns
+        and not df[
+            df["base_type"].str.contains("Cluster Jewel", na=False)
+        ].empty
     ):
         try:
             df["cluster_jewel_enchantment"] = df.name.map(
@@ -660,27 +638,6 @@ class ItemOverview(EconomyOverview):
 
     def dict_by_name(self) -> dict[str, typing.Any]:
         return {line.name: line for line in self.lines}
-
-    # def grouped_by_quantile(
-    #     self,
-    #     groups: list[str],
-    #     query: str = "",
-    # ) -> QcutItemsType:
-    #     return group_items_by_quantile(
-    #         self._dataframe,
-    #         groups=groups,
-    #         query=query,
-    #     )
-
-    # def grouped_by_single_influence_quantile(
-    #     self,
-    #     min_chaos_value: typing.Optional[float] = None,
-    # ) -> SingleInfluencedQcutItemsType:
-    #     return group_items_by_influence_and_quantile(
-    #         self._dataframe,
-    #         max_influences=1,
-    #         filter_value_min=min_chaos_value,
-    #     )
 
 
 class ItemFilterContext(pydantic.BaseModel):

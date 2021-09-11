@@ -215,11 +215,10 @@ class TieredThresholdOptions(ThresholdOptions, pydantic.BaseModel):
         stack_size: int = 1,
     ) -> list[str]:
         tags = []
-        chaos_value = (
-            row_or_chaos_value
-            if not isinstance(row_or_chaos_value, pd.Series)
-            else row_or_chaos_value.chaos_value
-        ) * stack_size
+        if isinstance(row_or_chaos_value, pd.Series):
+            chaos_value = row_or_chaos_value.chaos_value * stack_size
+        else:
+            chaos_value = row_or_chaos_value * stack_size
         if chaos_value < self.visibility:
             tags.append(ItemValue.GARBAGE.value)
         else:

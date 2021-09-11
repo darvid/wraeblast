@@ -28,7 +28,7 @@ def check_league_option(league_name: str) -> str:
     return league_name
 
 
-class CommandMixin:
+class BaseCommand(cleo.Command):
     def initialize_logging(self):
         logging.initialize_logging(
             default_level="DEBUG" if self.io.is_very_verbose() else "INFO"
@@ -48,7 +48,7 @@ def main() -> int:
     return app.run()
 
 
-class RenderFilterCommand(CommandMixin, cleo.Command):
+class RenderFilterCommand(BaseCommand):
     """Render an item filter template
 
     render_filter
@@ -143,7 +143,7 @@ class RenderFilterCommand(CommandMixin, cleo.Command):
                     f.write(rendered)
 
 
-class SyncInsightsCommand(CommandMixin, cleo.Command):
+class SyncInsightsCommand(BaseCommand):
     """Fetch Path of Exile economy insights
 
     sync_insights

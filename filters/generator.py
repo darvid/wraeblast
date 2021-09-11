@@ -90,7 +90,7 @@ def get_thresholds(df: pd.DataFrame) -> pd.DataFrame:
     return grouped.agg({"chaos_value": ["min"]})
 
 
-class BuildCommand(cmd.CommandMixin, cleo.Command):
+class BuildCommand(cmd.BaseCommand):
     """Generate filter options from a matrix of colormaps and thresholds.
 
     build_configs
@@ -166,7 +166,7 @@ class BuildCommand(cmd.CommandMixin, cleo.Command):
                     f.write(json.dumps(template_config, indent=4))
 
 
-class RankingsCommand(cmd.CommandMixin, cleo.Command):
+class RankingsCommand(cmd.BaseCommand):
     """Print rankings of economy segments.
 
     rankings
@@ -226,7 +226,7 @@ class RankingsCommand(cmd.CommandMixin, cleo.Command):
             thresholds = get_thresholds(df)
             for group, threshold in thresholds.iterrows():
                 table.add_row(
-                    [str(c) for c in group]
+                    [str(c) for c in group]  # type: ignore
                     + [str(threshold.chaos_value["min"])]
                 )
             table.render(self.io)

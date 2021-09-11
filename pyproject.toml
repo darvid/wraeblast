@@ -97,6 +97,11 @@ mkdocs-minify-plugin = "^0.4.0"
 tox = "^3.24.3"
 poetry2conda = "^0.3.0"
 ipympl = "^0.7.0"
+pyright = "^0.0.9"
+pandas-stubs = "^1.2.0"
+
+[tool.pyright]
+useLibraryCodeForTypes = true
 
 [tool.pytest.ini_options]
 filterwarnings = ['ignore::DeprecationWarning']
