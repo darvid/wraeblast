@@ -193,6 +193,9 @@ command line usage.
     -o softcore.filter -i -vvv filters/softcore.yaml.j2
 ```
 
+For detailed library installation instructions and usage, see the
+[technical documentation][17].
+
 ### Roadmap
 
 * [X] Base filter generation functionality that nobody cares about
@@ -235,3 +238,4 @@ this project in the near future.
 [14]: https://aws.amazon.com/polly/
 [15]: https://docs.aws.amazon.com/polly/latest/dg/NTTS-main.html
 [16]: https://github.com/darvid/wraeblast/releases
+[17]: https://wraeblast.readthedocs.io/en/latest/

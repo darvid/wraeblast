@@ -26,6 +26,15 @@ generation framework](/filtering/overview).
 
 ## Installation
 
+### With `conda`
+
+```shell
+$ conda env create -f environment.yml
+$ conda develop .
+# Optionally install Jupyter in the conda environment:
+$ conda install -c anaconda ipykernel jupyter
+```
+
 ### With ``pip``
 
 ```shell
