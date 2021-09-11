@@ -14,7 +14,7 @@ name = "cz_customize"
 version_files = ["pyproject.toml:version"]
 
 [tool.commitizen.customize]
-schema_pattern = "(init|build|ci|docs|feature|fix|perf|refactor|style|test|chore|revert|bump)(\\(\\S+\\))?!?:(\\s.*)"
+schema_pattern = "(init|build|ci|dep-add|docs|feature|fix|perf|refactor|style|test|chore|revert|bump)(\\(\\S+\\))?!?:(\\s.*)"
 
 [tool.isort]
 ensure_newline_before_comments = true
@@ -96,6 +96,7 @@ mkdocs-literate-nav = "^0.4.0"
 mkdocs-minify-plugin = "^0.4.0"
 tox = "^3.24.3"
 poetry2conda = "^0.3.0"
+ipympl = "^0.7.0"
 
 [tool.pytest.ini_options]
 filterwarnings = ['ignore::DeprecationWarning']
