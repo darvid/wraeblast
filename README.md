@@ -13,6 +13,9 @@
   <a href="https://wraeblast.readthedocs.io">
     <img title="Library Documentation" src="https://readthedocs.org/projects/wraeblast/badge/?version=latest">
   </a>
+  <a href="https://discord.gg/gRtHu7USBw">
+    <img alt="Discord" src="https://img.shields.io/discord/886072454349467651">
+  </a>
 </p>
 <p align="center">
   A library for interfacing with
