@@ -101,6 +101,9 @@ ipympl = "^0.7.0"
 [tool.pytest.ini_options]
 filterwarnings = ['ignore::DeprecationWarning']
 
+[tool.semantic_release]
+version_toml = ['pyproject.toml:tool.poetry.version']
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
