@@ -1,6 +1,7 @@
 *.md.toc.*
 .insights_cache/
 output/
+poetry.lock
 
 # Profiling artifacts
 *.svg

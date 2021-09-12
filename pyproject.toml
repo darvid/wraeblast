@@ -15,7 +15,7 @@ name = "cz_customize"
 version_files = ["pyproject.toml:version"]
 
 [tool.commitizen.customize]
-schema_pattern = "(init|build|ci|dep-add|docs|feature|fix|perf|refactor|style|test|chore|revert|bump)(\\(\\S+\\))?!?:(\\s.*)"
+schema_pattern = "(init|build|ci|dep-(add|rm|up)|docs|feature|fix|perf|refactor|style|test|chore|revert|bump)(\\(\\S+\\))?!?:(\\s.*)"
 
 [tool.isort]
 ensure_newline_before_comments = true
