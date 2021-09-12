@@ -114,7 +114,7 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
       - name: Python Semantic Release
-        uses: bjoluc/semantic-release-config-poetry@v1.0.4
+        uses: relekang/python-semantic-release@v7.19.2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           pypi_token: ${{ secrets.PYPI_TOKEN }}
