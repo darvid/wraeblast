@@ -101,6 +101,7 @@ ipympl = "^0.7.0"
 pyright = "^0.0.9"
 pandas-stubs = "^1.2.0"
 python-semantic-release = "^7.19.2"
+semver = "2.10"
 
 [tool.poetry.extras]
 tts = ["pyttsx3"]
@@ -114,6 +115,7 @@ filterwarnings = ['ignore::DeprecationWarning']
 [tool.semantic_release]
 branch = "main"
 version_toml = ['pyproject.toml:tool.poetry.version']
+build_command = "poetry build"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
