@@ -13,11 +13,20 @@ import botocore.exceptions
 import matplotlib.colors
 import pandas as pd
 import pydub
-import pyttsx3
 import structlog
 
 from wraeblast import constants, insights
 from wraeblast.filtering import colors, elements
+
+
+try:
+    import pyttsx3
+
+    PYTTSX3_AVAILABLE = True
+except ImportError:
+    if "CI" not in os.environ:
+        raise
+    PYTTSX3_AVAILABLE = False
 
 
 logger = structlog.get_logger()
