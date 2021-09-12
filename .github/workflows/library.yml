@@ -114,7 +114,10 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
       - name: Python Semantic Release
-        uses: bjoluc/semantic-release-config-poetry@v1
-        with:
-          github_token: ${{ secrets.GH_PAT }}
-          pypi_token: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "action@github.com"
+          semantic-release publish -D commit_author="github-actions <action@github.com>"
+        env:
+          GH_TOKEN: ${{secrets.GH_PAT}}
+          PYPI_TOKEN: ${{secrets.PYPI_TOKEN}}

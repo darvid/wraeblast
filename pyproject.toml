@@ -100,6 +100,7 @@ poetry2conda = "^0.3.0"
 ipympl = "^0.7.0"
 pyright = "^0.0.9"
 pandas-stubs = "^1.2.0"
+python-semantic-release = "^7.19.2"
 
 [tool.poetry.extras]
 tts = ["pyttsx3"]
