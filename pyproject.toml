@@ -6,6 +6,7 @@ exclude = '''
     \.(git|hg|mypy_cache|tox|venv)
     | _?build
     | dist
+    | __pycache__
   )/
   '''
 
@@ -74,7 +75,7 @@ mergedeep = "^1.3.4"
 pydub = "^0.25.1"
 boto3 = "^1.18.26"
 pandas = "^1.3.2"
-pyttsx3 = "^2.90"
+pyttsx3 = { version = "^2.90", optional = true }
 colormath = "^3.0.0"
 backoff = "^1.11.1"
 aiohttp = "^3.7.4"
@@ -100,6 +101,9 @@ ipympl = "^0.7.0"
 pyright = "^0.0.9"
 pandas-stubs = "^1.2.0"
 
+[tool.poetry.extras]
+tts = ["pyttsx3"]
+
 [tool.pyright]
 useLibraryCodeForTypes = true
 
@@ -107,6 +111,7 @@ useLibraryCodeForTypes = true
 filterwarnings = ['ignore::DeprecationWarning']
 
 [tool.semantic_release]
+branch = "main"
 version_toml = ['pyproject.toml:tool.poetry.version']
 
 [build-system]
