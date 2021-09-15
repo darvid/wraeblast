@@ -81,28 +81,28 @@
       overview,
       thresholds,
       query="",
-      additional_groups=["quintile"],
+      groups=["quintile"],
       tags=[],
       conditions={},
       base_type_field="base_type",
       tts_phrase="base item"): -%}
   {%- set df = overview.df if not query else overview.df.query(query) -%}
   {%- set df = df.query(thresholds.get_dataframe_query()) -%}
-  {%- for group, rows in df.groupby(additional_groups): %}
-  {%- if rows|length: %}
+  {%- for group, rows in df.groupby(groups): %}
+  {%- if not rows.empty: %}
   - conditions:
       BaseType:
         {%- for base_type in rows.groupby(base_type_field).groups.keys(): %}
         - "{{ base_type }}"
         {%- endfor %}
-      {%- if "map_tier" in additional_groups: %}
+      {%- if "map_tier" in groups: %}
       MapTier: {'>=': '{{ rows.iloc[0].map_tier }}'}
       {%- endif %}
-      {%- if "level_required" in additional_groups: %}
-      ItemLevel: {'>=': '{{ group[additional_groups.index("level_required")]|int }}'}
+      {%- if "level_required" in groups: %}
+      ItemLevel: {'>=': '{{ group[groups.index("level_required")]|int }}'}
       {%- endif %}
-      {%- if "influences" in additional_groups: %}
-      HasInfluence: {{ group[additional_groups.index("influences")][0] }}
+      {%- if "influences" in groups: %}
+      HasInfluence: {{ group[groups.index("influences")][0] }}
       {%- endif %}
       {% for key, value in conditions.items(): -%}
       {{ key }}: {{ value }}
@@ -623,10 +623,8 @@ rules:
   - name: "Skill gems: {{ row.item_name }} {{ row.gem_level }}/{{ row.gem_quality|int }}"
     conditions:
       Class: Gems
-      {%- if (row.item_name.startswith("Anomalous")
-              or row.item_name.startswith("Divergent")
-              or row.item_name.startswith("Phantasmal")): %}
-      GemQualityType: {{ row.item_name.split(" ")[0] }}
+      {%- if row.is_alt_quality: %}
+      GemQualityType: {{ row.alt_quality }}
       {%- endif %}
       BaseType: {'==': "{{ normalize_skill_gem_name(row.item_name) }}"}
       {%- if row.gem_quality > 0: %}
@@ -645,12 +643,15 @@ rules:
       ) }}
   {%- endfor %}
 
-  {%- for group, df in gems_show.groupby(["gem_level", "gem_quality"]): -%}
-  {%- set gem_level, gem_quality = group -%}
+  {%- for group, df in gems_show.groupby(["gem_level", "gem_quality", "alt_quality"]): -%}
+  {%- set gem_level, gem_quality, alt_quality = group -%}
   {%- for percentile, df_ in df.groupby("percentile"): %}
   - name: "Skill gems: P{{ percentile }} {{ gem_level }}/{{ gem_quality|int }}"
     conditions:
       Class: Gems
+      {%- if alt_quality: %}
+      GemQualityType: {{ alt_quality }}
+      {%- endif %}
       BaseType:
         '==':
           {%- for index, row in df_.iterrows(): %}
@@ -750,23 +751,6 @@ rules:
     tags:
       - prophecies
       - garbage
-{#
-  {%- for index, row in proph_show.iterrows(): %}
-  - conditions:
-      Class: Currency
-      BaseType: {'==': Prophecy}
-      Prophecy: {'==': "{{ row.item_name }}"}
-    actions:
-      {{ set_colors_from_colormap(options.colormaps.prophecies, row.chaos_value) }}
-      {{- set_tts_alertsound(row, thresholds=options.thresholds.prophecies) }}
-    tags:
-      - prophecies
-      {{- set_tags(
-          row,
-          thresholds=options.thresholds.prophecies,
-          overview=ctx.prophecies,
-      ) }}
-  {%- endfor %} #}
 
   - conditions:
       Class: Currency
@@ -1212,7 +1196,7 @@ rules:
       overview=ctx.unique_accessories,
       thresholds=options.thresholds.uniques,
       conditions={"Rarity": "Unique"},
-      additional_groups=["base_type", "level_required"],
+      groups=["base_type", "level_required"],
       tags=["unique", "accessories"],
       tts_phrase="unique accessory",
     ) }}
@@ -1222,7 +1206,7 @@ rules:
       overview=ctx.unique_armours,
       thresholds=options.thresholds.uniques,
       conditions={"Rarity": "Unique"},
-      additional_groups=["base_type", "level_required"],
+      groups=["base_type", "level_required"],
       tags=["unique", "armor"],
       tts_phrase="unique armor",
     ) }}
@@ -1232,7 +1216,7 @@ rules:
       overview=ctx.unique_flasks,
       thresholds=options.thresholds.uniques,
       conditions={"Rarity": "Unique"},
-      additional_groups=["base_type", "level_required"],
+      groups=["base_type", "level_required"],
       tags=["unique", "flasks"],
       tts_phrase="unique flask",
     ) }}
@@ -1242,7 +1226,7 @@ rules:
       overview=ctx.unique_jewels,
       thresholds=options.thresholds.uniques,
       conditions={"Rarity": "Unique"},
-      additional_groups=["base_type", "level_required"],
+      groups=["base_type", "level_required"],
       tags=["unique", "jewels"],
       tts_phrase="unique jewel",
     ) }}
@@ -1251,7 +1235,7 @@ rules:
   {{ multi_base_type_by_quantile(
       overview=ctx.unique_maps,
       thresholds=options.thresholds.uniques,
-      additional_groups=["map_tier"],
+      groups=["map_tier"],
       conditions={"Rarity": "Unique"},
       tags=["unique", "maps"],
       tts_phrase="unique map",
@@ -1262,7 +1246,7 @@ rules:
       overview=ctx.unique_weapons,
       thresholds=options.thresholds.uniques,
       query="(links.isnull()) or (links < 6)",
-      additional_groups=["base_type", "level_required"],
+      groups=["base_type", "level_required"],
       conditions={"Rarity": "Unique"},
       tags=["unique", "weapons"],
       tts_phrase="unique weapon",
@@ -1382,7 +1366,7 @@ rules:
       thresholds=options.thresholds.base_types,
       query="influences.str.len() == 1",
       conditions={"Rarity": {"<": "Unique"}},
-      additional_groups=["level_required", "influences", "percentile"],
+      groups=["level_required", "influences", "percentile"],
       tags=["base_types", "gear"],
       tts_phrase="influenced base",
     ) }}

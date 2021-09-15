@@ -21,7 +21,7 @@ default_threshold_overrides = {
     "prophecies": {"quantile": "QU4"},
     "scarabs": {"quantile": "QU2"},
     "skill_gems": {"quantile": "QU4"},
-    "uniques": {"quantile": "QU5"},
+    "uniques": {"quantile": "QU4"},
     "vials": {"quantile": "QU2"},
 }
 sequential_colormaps = [

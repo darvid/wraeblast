@@ -455,6 +455,22 @@ def build_economy_overview_dataframe(
     # Allow dot-notation access to item names, since name is reserved
     df["item_name"] = df["name"]
 
+    df["alt_quality"] = ""
+    df["is_alt_quality"] = False
+    alt_filter = (
+        df["item_name"].str.startswith("Anomalous")
+        | df["item_name"].str.startswith("Divergent")
+        | df["item_name"].str.startswith("Phantasmal")
+    )
+    if not df[alt_filter].empty:
+        df.loc[alt_filter, "is_alt_quality"] = True
+        df.loc[alt_filter, "alt_quality"] = df["item_name"].apply(
+            lambda s: s[: s.find(" ")],
+        )
+        df.loc[alt_filter, "item_name"] = df["item_name"].apply(
+            lambda s: s[s.find(" ") + 1 :],
+        )
+
     # Normalized chaos values
     # XXX: since log(0) is -inf, the min chaos value of the dataframe replaces
     # rows with a chaos value of 0
@@ -492,13 +508,12 @@ def build_economy_overview_dataframe(
         if isinstance(q, (list, tuple)):
             q, labels = q
         df[key] = pd.qcut(
-            df.rank(method="first", numeric_only=True)["chaos_value"],
+            df["chaos_value"].rank(method="first", numeric_only=True),
             q=q,
             labels=False if labels is None else None,
             precision=0,
             duplicates="drop",
         )
-        df[key] += 1
         if labels is not None:
             df[key] = df[key].map(dict(enumerate(labels)))
     return df
