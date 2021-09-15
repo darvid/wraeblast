@@ -96,7 +96,7 @@ class BuildCommand(cmd.BaseCommand):
     build_configs
         {filter-name : Filter name}
         {thresholds=ALL : Comma-separated quantile thresholds (defaults
-            to all quintiles: QU1..QU5)}
+            to all quintiles: QU0..QU4)}
         {colormaps=ALL : Comma-separated colormap names (defaults to
             all sequential colormaps)}
         {--C|secondary-colormap=Turbid_20_r : Complimentary colormap

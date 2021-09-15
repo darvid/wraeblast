@@ -144,11 +144,11 @@ def get_quantile_threshold_tags(
     if value is None:
         quantile, value = insights.get_quantile_tuple(quantile)
     if mask:
-        start = 1
+        start = 0
         end = value
     else:
-        start = value + 1
-        end = insights.quantiles[quantile] + 1
+        start = value
+        end = insights.quantiles[quantile]
     quantiles = range(start, end)
     prefix = "QU" if quantile == "quintile" else quantile[0].upper()
     return [f"{prefix}{i}" for i in quantiles]

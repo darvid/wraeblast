@@ -24,7 +24,7 @@ default_options = {
     # Thresholds for categorizing items and currency based on chaos value
     # TODO: Allow thresholds to be functions of current league length
     "thresholds": {
-        k: {"quantile": "QU5"}
+        k: {"quantile": "QU4"}
         for k in (
             "artifacts",
             "base_types",
