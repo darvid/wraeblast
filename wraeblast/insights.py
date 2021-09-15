@@ -504,6 +504,23 @@ def build_economy_overview_dataframe(
     return df
 
 
+class PriceSnapshot(pydantic.BaseModel):
+    count: int
+    value: float
+    days_ago: int
+
+    class Config:
+        alias_generator = to_camel
+
+
+class CurrencyHistory(pydantic.BaseModel):
+    pay_currency_graph_data: list[PriceSnapshot]
+    receive_currency_graph_data: list[PriceSnapshot]
+
+    class Config:
+        alias_generator = to_camel
+
+
 class EconomyOverview(pydantic.BaseModel, collections.abc.Iterator):
     lines: typing.List[BaseLine]
     chaos_value_bins: int = 10
@@ -735,6 +752,17 @@ class PoENinja(uplink.Consumer):
         league: uplink.Query(type=str),  # type: ignore
         type: uplink.Query(type=CurrencyType),  # type: ignore
     ) -> CurrencyOverview:
+        ...
+
+    # @uplink.response_handler(raise_for_status)
+    # @uplink.ratelimit(calls=2, period=150)
+    @get_json("CurrencyHistory")  # type: ignore
+    def get_currency_history(
+        self,
+        league: uplink.Query(type=str),  # type: ignore
+        type: uplink.Query(type=CurrencyType),  # type: ignore
+        currency_id: uplink.Query("currencyId", type=int),  # type: ignore
+    ) -> CurrencyHistory:
         ...
 
     @uplink.response_handler(raise_for_status)

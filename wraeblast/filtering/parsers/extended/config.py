@@ -46,83 +46,6 @@ default_options = {
             "vials",
             "watchstones",
         )
-        # "artifacts": {
-        #     "visibility": 0,
-        #     "valuable": 2,
-        #     "extremely_valuable": 5,
-        # },
-        # "base_types": {
-        #     "visibility": 30,
-        #     "valuable": 90,
-        #     "extremely_valuable": 200,
-        # },
-        # "blighted_maps": {
-        #     "visibility": 30,
-        # },
-        # "cluster_jewels": {
-        #     "visibility": 10,
-        #     "valuable": 25,
-        #     "extremely_valuable": 100,
-        # },
-        # "currency": {
-        #     "visibility": 0.5,
-        #     "valuable": 30,
-        #     "extremely_valuable": 70,
-        # },
-        # "delirium_orbs": {
-        #     "visibility": 10,
-        #     "valuable": 28,
-        #     "extremely_valuable": 40,
-        # },
-        # "essences": {
-        #     "visibility": 10,
-        # },
-        # "divination_cards": {
-        #     "visibility": 6,
-        # },
-        # "fossils": {
-        #     "visibility": 10,
-        # },
-        # "fragments": {
-        #     "visibility": 2,
-        #     "valuable": 12,
-        #     "extremely_valuable": 70,
-        # },
-        # "gems": {
-        #     "visibility": 25,
-        #     "valuable": 30,
-        #     "extremely_valuable": 90,
-        # },
-        # "maps": {
-        #     "visibility": 1,
-        #     "valuable": 5,
-        #     "extremely_valuable": 30,
-        # },
-        # "oils": {
-        #     "visibility": 5,
-        #     "valuable": 14,
-        #     "extremely_valuable": 25,
-        # },
-        # "scarabs": {
-        #     "visibility": 1,
-        #     "valuable": 4,
-        #     "extremely_valuable": 13,
-        # },
-        # "uniques": {
-        #     "visibility": 30,
-        #     "valuable": 60,
-        #     "extremely_valuable": 80,
-        # },
-        # "vials": {
-        #     "visibility": 1,
-        #     "valuable": 15,
-        #     "extremely_valuable": 100,
-        # },
-        # "watchstones": {
-        #     "visibility": 3,
-        #     "valuable": 10,
-        #     "extremely_valuable": 90,
-        # },
     },
     "colormaps": {
         "artifacts": {"name": "Curl_20"},
@@ -193,8 +116,28 @@ class ThresholdOptions(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def get_dataframe_query(self) -> str:
+    def get_dataframe_query(self, inverted: bool = False) -> str:
         ...
+
+    def get_tiered_results(
+        self,
+        overview: "insights.EconomyOverview",
+        topk: int = 10,
+    ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        df_above_threshold = self.filter_overview(overview)
+        df_below_threshold = self.filter_overview(overview, inverted=True)
+        return (
+            df_above_threshold[:topk],
+            df_above_threshold[topk:],
+            df_below_threshold,
+        )
+
+    def filter_overview(
+        self,
+        overview: "insights.EconomyOverview",
+        inverted: bool = False,
+    ) -> pd.DataFrame:
+        return overview.df.query(self.get_dataframe_query(inverted=inverted))
 
 
 class TieredThresholdOptions(ThresholdOptions, pydantic.BaseModel):
@@ -206,19 +149,22 @@ class TieredThresholdOptions(ThresholdOptions, pydantic.BaseModel):
     def check_visibility(self, row: pd.Series) -> bool:
         return row.chaos_value >= self.visibility
 
-    def get_dataframe_query(self) -> str:
-        return f"chaos_value >= {self.visibility}"
+    def get_dataframe_query(self, inverted: bool = False) -> str:
+        op = ">=" if not inverted else "<"
+        return f"chaos_value {op} {self.visibility}"
 
     def get_tags(
         self,
-        row_or_chaos_value: typing.Union[pd.Series, float],
+        data: typing.Union[pd.DataFrame, pd.Series, float],
         stack_size: int = 1,
     ) -> list[str]:
         tags = []
-        if isinstance(row_or_chaos_value, pd.Series):
-            chaos_value = row_or_chaos_value.chaos_value * stack_size
+        if isinstance(data, pd.DataFrame):
+            chaos_value = data.chaos_value.max() * stack_size
+        elif isinstance(data, pd.Series):
+            chaos_value = data.chaos_value * stack_size
         else:
-            chaos_value = row_or_chaos_value * stack_size
+            chaos_value = data * stack_size
         if chaos_value < self.visibility:
             tags.append(ItemValue.GARBAGE.value)
         else:
@@ -252,36 +198,42 @@ class QuantileThresholdOptions(ThresholdOptions, pydantic.BaseModel):
             return False
         return q_value >= rows.iloc[0][q_column]  # type: ignore
 
-    def get_dataframe_query(self) -> str:
+    def get_dataframe_query(self, inverted: bool = False) -> str:
         q_column, q_value = self.quantile_tuple
-        return f"{q_column} >= {q_value}"
+        op = ">=" if not inverted else "<"
+        return f"{q_column} {op} {q_value}"
 
     def get_tags(
         self,
-        row_or_chaos_value: typing.Union[pd.Series, float],
+        data: typing.Union[pd.DataFrame, pd.Series, float],
         stack_size: int = 1,
         overview: typing.Optional["insights.EconomyOverview"] = None,
     ) -> list[str]:
         get_row_tags = lambda r: [
-            f'D{r["decile"]}',
-            f'P{r["percentile"]}',
             f'Q{r["quartile"]}',
             f'QU{r["quintile"]}',
+            f'D{r["decile"]}',
+            f'P{r["percentile"]}',
         ]
-        if not isinstance(row_or_chaos_value, pd.Series):
+        if not isinstance(data, (pd.DataFrame, pd.Series)):
             if overview is None:
                 raise RuntimeError("overview must be provided")
             return get_row_tags(
-                overview.get_quantiles_for_threshold(
-                    float(row_or_chaos_value) * stack_size
-                )
+                overview.get_quantiles_for_threshold(float(data) * stack_size)
             )
         if overview is None:
-            return get_row_tags(row_or_chaos_value)
-        chaos_value = row_or_chaos_value.chaos_value * stack_size
+            return get_row_tags(data)
+        if isinstance(data, pd.DataFrame):
+            quantiles = data.groupby(list(insights.quantiles.keys()))
+            return [
+                p
+                for i, q in enumerate(zip(*quantiles.groups.keys()))
+                for p in {["Q", "QU", "D", "P"][i] + str(r) for r in q}
+            ]
+        chaos_value = data.chaos_value * stack_size
         rows = overview.df[overview.df.chaos_value >= chaos_value]
         if not len(rows):
-            return get_row_tags(row_or_chaos_value)
+            return get_row_tags(data)
         chaos_values = rows.chaos_value
         return get_row_tags(rows[chaos_values == chaos_values.min()].iloc[0])
 

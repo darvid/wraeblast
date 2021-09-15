@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-python@v2
       - name: Install dependencies
         run: |
-          sudo apt-get install awscli espeak ffmpeg -y
+          sudo apt-get install awscli -y
           python -m pip install --upgrade poetry
           poetry install
       - name: Sync economy data
@@ -65,7 +65,6 @@ jobs:
         uses: actions/setup-python@v2
       - name: Install dependencies
         run: |
-          sudo apt-get install espeak ffmpeg jq -y
           python -m pip install --upgrade poetry
           poetry install
       - name: Download insights and TTS cache

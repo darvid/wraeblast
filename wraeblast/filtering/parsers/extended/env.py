@@ -24,8 +24,6 @@ try:
 
     PYTTSX3_AVAILABLE = True
 except ImportError:
-    if "CI" not in os.environ:
-        raise
     PYTTSX3_AVAILABLE = False
 
 

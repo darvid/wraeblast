@@ -59,6 +59,24 @@
   {%- endif %}
 {%- endmacro -%}
 
+{%- macro set_tts_alertsound_range(
+      tts_phrase,
+      chaos_value_min,
+      chaos_value_max=None): -%}
+  {%- set value_min = ctx.currency.get_human_readable_value(chaos_value_min) -%}
+  {%- set value_max = ctx.currency.get_human_readable_value(chaos_value_max) -%}
+      CustomAlertSound: '{{
+        tts("{} {}{}".format(
+          tts_phrase,
+          value_min,
+          (
+            " to {}".format(value_max)
+            if chaos_value_max > chaos_value_min and value_min != value_max else ""
+          ),
+        ).strip(), prefix=tts_prefix, voice_id=tts_voice)
+      }}'
+{%- endmacro -%}
+
 {%- macro multi_base_type_by_quantile(
       overview,
       thresholds,
@@ -96,20 +114,11 @@
           vmax=overview.max_chaos_value(),
       ) }}
       {%- if thresholds.check_visibility(rows.iloc[0]): %}
-      {%- set min_chaos_value = ctx.currency.get_human_readable_value(
-            rows["chaos_value"].min()) -%}
-      {%- set max_chaos_value = ctx.currency.get_human_readable_value(
-            rows["chaos_value"].max()) %}
-      CustomAlertSound: '{{
-        tts("{} {}{}".format(
-          tts_phrase,
-          min_chaos_value,
-          (
-            " to {}".format(max_chaos_value)
-            if max_chaos_value > min_chaos_value else ""
-          ),
-        ).strip(), prefix=tts_prefix, voice_id=tts_voice)
-      }}'
+      {{ set_tts_alertsound_range(
+            tts_phrase,
+            rows["chaos_value"].min(),
+            rows["chaos_value"].max(),
+      ) }}
       {%- endif %}
     tags:
       {%- for tag in tags: %}
@@ -472,10 +481,10 @@ rules:
     tags:
       - delirium_orbs
       {{- set_tags(
-          row,
-          thresholds=options.thresholds.delirium_orbs,
-          stack_size=stack_size,
-          overview=ctx.delirium_orbs,
+            row,
+            thresholds=options.thresholds.delirium_orbs,
+            stack_size=stack_size,
+            overview=ctx.delirium_orbs,
       ) }}
   {%- endfor -%}
   {%- endfor %}
@@ -496,10 +505,10 @@ rules:
       - stacks
       {%- endif %}
       {{- set_tags(
-          row,
-          thresholds=options.thresholds.essences,
-          stack_size=stack_size,
-          overview=ctx.essences,
+            row,
+            thresholds=options.thresholds.essences,
+            stack_size=stack_size,
+            overview=ctx.essences,
       ) }}
   {%- endfor -%}
   {%- endfor %}
@@ -520,10 +529,10 @@ rules:
       - stacks
       {%- endif %}
       {{- set_tags(
-          row,
-          thresholds=options.thresholds.fossils,
-          stack_size=stack_size,
-          overview=ctx.fossils,
+            row,
+            thresholds=options.thresholds.fossils,
+            stack_size=stack_size,
+            overview=ctx.fossils,
       ) }}
   {%- endfor -%}
   {%- endfor %}
@@ -544,19 +553,18 @@ rules:
       - stacks
       {%- endif %}
       {{- set_tags(
-          row,
-          thresholds=options.thresholds.fossils,
-          stack_size=stack_size,
-          overview=ctx.resonators,
+            row,
+            thresholds=options.thresholds.fossils,
+            stack_size=stack_size,
+            overview=ctx.resonators,
       ) }}
   {%- endfor -%}
   {%- endfor %}
 
   # Divination cards
-  {%- for index, row in ctx.divination_cards: -%}
-  {%- for op, stack_size in iter_stacks(1, 5): %}
+  {%- set div_topk, div_show, div_hide = options.thresholds.divination_cards.get_tiered_results(ctx.divination_cards) -%}
+  {%- for index, row in div_topk.iterrows(): %}
   - conditions:
-      StackSize: { '{{op}}': {{stack_size}} }
       Class: Divination
       BaseType: {'==': "{{ row.item_name }}"}
     actions:
@@ -565,20 +573,53 @@ rules:
     tags:
       - div_cards
       - divination_cards
-      {%- if stack_size > 1: %}
-      - stacks
-      {%- endif %}
       {{- set_tags(
-          row,
-          thresholds=options.thresholds.divination_cards,
-          stack_size=stack_size,
-          overview=ctx.divination_cards,
+            row,
+            thresholds=options.thresholds.divination_cards,
+            overview=ctx.divination_cards,
+      ) }}
+  {%- endfor %}
+
+  {%- for index, row in div_show.iterrows(): %}
+  {%- for op, stack_size in iter_stacks(1, 5): %}
+  - conditions:
+      Class: Divination
+      BaseType: {'==': "{{ row.item_name }}"}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.divination_cards, row.chaos_value) }}
+      {{- set_tts_alertsound(
+            row,
+            name="Divination Card",
+            thresholds=options.thresholds.divination_cards,
+      ) }}
+    tags:
+      - div_cards
+      - divination_cards
+      {{- set_tags(
+            row,
+            thresholds=options.thresholds.divination_cards,
+            stack_size=stack_size,
+            overview=ctx.divination_cards,
       ) }}
   {%- endfor -%}
   {%- endfor %}
 
+  - conditions:
+      Class: Divination
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.divination_cards, 1, vmax=20) }}
+    tags:
+      - div_cards
+      - divination_cards
+      {{- set_tags(
+            div_hide.chaos_value.min(),
+            thresholds=options.thresholds.divination_cards,
+            overview=ctx.divination_cards,
+      ) }}
+
   # Skill gems
-  {%- for index, row in ctx.skill_gems: %}
+  {%- set gems_topk, gems_show, gems_hide = options.thresholds.skill_gems.get_tiered_results(ctx.skill_gems) -%}
+  {%- for index, row in gems_topk.iterrows(): %}
   - name: "Skill gems: {{ row.item_name }} {{ row.gem_level }}/{{ row.gem_quality|int }}"
     conditions:
       Class: Gems
@@ -594,7 +635,7 @@ rules:
       GemLevel: {'>=': '{{ row.gem_level }}'}
     actions:
       {{ set_colors_from_colormap(options.colormaps.skill_gems, row.chaos_value) }}
-      {{- set_tts_alertsound(row, "skill gem", thresholds=options.thresholds.skill_gems) }}
+      {{- set_tts_alertsound(row, thresholds=options.thresholds.skill_gems) }}
     tags:
       - skill_gems
       {{- set_tags(
@@ -604,10 +645,40 @@ rules:
       ) }}
   {%- endfor %}
 
+  {%- for group, df in gems_show.groupby(["gem_level", "gem_quality"]): -%}
+  {%- set gem_level, gem_quality = group -%}
+  {%- for percentile, df_ in df.groupby("percentile"): %}
+  - name: "Skill gems: P{{ percentile }} {{ gem_level }}/{{ gem_quality|int }}"
+    conditions:
+      Class: Gems
+      BaseType:
+        '==':
+          {%- for index, row in df_.iterrows(): %}
+          - "{{ row.item_name }}"
+          {%- endfor %}
+      {%- if gem_quality > 0: %}
+      Quality: {'>=': '{{ gem_quality|int }}'}
+      {%- endif %}
+      GemLevel: {'>=': '{{ gem_level }}'}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.skill_gems, df.chaos_value.mean()) }}
+      {{ set_tts_alertsound_range(
+            "skill gem",
+            df_.chaos_value.min(),
+            df_.chaos_value.max(),
+      ) }}
+    tags:
+      - skill_gems
+      {%- for tag in options.thresholds.skill_gems.get_tags(df_, overview=ctx.skill_gems): %}
+      - {{ tag }}
+      {%- endfor %}
+  {%- endfor %}
+  {%- endfor %}
+
   - conditions:
       Class: Gems
     actions:
-      {{ set_colors_from_colormap(options.colormaps.skill_gems, 1) }}
+      {{ set_colors_from_colormap(options.colormaps.skill_gems, 1, vmax=20) }}
     tags:
       - skill_gems
       - garbage
@@ -630,11 +701,12 @@ rules:
       - garbage
 
   # Currency - Prophecies
-  {%- for index, row in ctx.prophecies: %}
+  {%- set proph_topk, proph_show, _ = options.thresholds.prophecies.get_tiered_results(ctx.prophecies) -%}
+  {%- for index, row in proph_topk.iterrows(): %}
   - conditions:
       Class: Currency
-      BaseType: Prophecy
-      Prophecy: {{ row.item_name }}
+      BaseType: {'==': Prophecy}
+      Prophecy: {'==': "{{ row.item_name }}"}
     actions:
       {{ set_colors_from_colormap(options.colormaps.prophecies, row.chaos_value) }}
       {{- set_tts_alertsound(row, thresholds=options.thresholds.prophecies) }}
@@ -646,6 +718,55 @@ rules:
           overview=ctx.prophecies,
       ) }}
   {%- endfor %}
+
+  {%- for percentile, df in proph_show.groupby("percentile"): %}
+  - conditions:
+      Class: Currency
+      BaseType: {'==': Prophecy}
+      Prophecy:
+        '==':
+          {%- for index, row in df.iterrows(): %}
+          - "{{ row.item_name }}"
+          {%- endfor %}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.prophecies, df.chaos_value.mean()) }}
+      {{ set_tts_alertsound_range(
+            "prophecy",
+            df.chaos_value.min(),
+            df.chaos_value.max(),
+      ) }}
+    tags:
+      - prophecies
+      {%- for tag in options.thresholds.prophecies.get_tags(df, overview=ctx.prophecies): %}
+      - {{ tag }}
+      {%- endfor %}
+  {%- endfor %}
+
+  - conditions:
+      Class: Currency
+      BaseType: {'==': Prophecy}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.prophecies, 1, vmax=20) }}
+    tags:
+      - prophecies
+      - garbage
+{#
+  {%- for index, row in proph_show.iterrows(): %}
+  - conditions:
+      Class: Currency
+      BaseType: {'==': Prophecy}
+      Prophecy: {'==': "{{ row.item_name }}"}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.prophecies, row.chaos_value) }}
+      {{- set_tts_alertsound(row, thresholds=options.thresholds.prophecies) }}
+    tags:
+      - prophecies
+      {{- set_tags(
+          row,
+          thresholds=options.thresholds.prophecies,
+          overview=ctx.prophecies,
+      ) }}
+  {%- endfor %} #}
 
   - conditions:
       Class: Currency
@@ -689,21 +810,23 @@ rules:
   {%- endfor %}
 
   # Expedition Artifacts
-  {%- for index, row in ctx.artifacts: -%}
-  {%- for stack_size in range(30, 0, -1): %}
+  {%- set artifacts_topk, artifacts_show, _ = options.thresholds.artifacts.get_tiered_results(ctx.artifacts) -%}
+  {%- for index, row in artifacts_topk.iterrows(): %}
+  {%- for op, stack_size in iter_stacks(1, 30): %}
   - conditions:
-      StackSize: { '>=': "{{ stack_size }}" }
-      BaseType: {{ row.item_name }}
+      StackSize: { '{{ op }}': "{{ stack_size }}" }
+      Class: Currency
+      BaseType: {'==': "{{ row.item_name }}"}
     actions:
       {{ set_colors_from_colormap(
-          options.colormaps.artifacts,
-          row.chaos_value * stack_size,
-          lum_threshold=0.45,
+            options.colormaps.artifacts,
+            row.chaos_value * stack_size,
+            lum_threshold=0.45,
       ) }}
       {{- set_tts_alertsound(
-          row,
-          thresholds=options.thresholds.artifacts,
-          stack_size=stack_size
+            row,
+            thresholds=options.thresholds.artifacts,
+            stack_size=stack_size
       ) }}
     tags:
       - artifacts
@@ -712,13 +835,50 @@ rules:
       - notts
       {%- endif %}
       {{- set_tags(
-          row,
-          thresholds=options.thresholds.artifacts,
-          stack_size=stack_size,
-          overview=ctx.artifacts,
+            row,
+            thresholds=options.thresholds.artifacts,
+            stack_size=stack_size,
+            overview=ctx.artifacts,
       ) }}
   {%- endfor %}
   {%- endfor %}
+
+  {%- for percentile, df in artifacts_show.groupby("percentile"): %}
+  {%- for op, stack_size in iter_stacks(1, 30): %}
+  - conditions:
+      StackSize: { '{{ op }}': "{{ stack_size }}" }
+      Class: Currency
+      BaseType:
+        '==':
+          {%- for index, row in df.iterrows(): %}
+          - "{{ row.item_name }}"
+          {%- endfor %}
+    actions:
+      {{ set_colors_from_colormap(
+            options.colormaps.artifacts,
+            df.chaos_value.min() * stack_size,
+      ) }}
+      {{ set_tts_alertsound_range(
+            "artifact",
+            df.chaos_value.min() * stack_size,
+            df.chaos_value.max() * stack_size,
+      ) }}
+    tags:
+      - artifacts
+      {%- for tag in options.thresholds.artifacts.get_tags(df, overview=ctx.artifacts): %}
+      - {{ tag }}
+      {%- endfor %}
+  {%- endfor %}
+  {%- endfor %}
+
+  - conditions:
+      Class: Currency
+      BaseType: Artifact
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.artifacts, 1, vmax=20) }}
+    tags:
+      - artifacts
+      - garbage
 
   # Currency - uncategorized league-specific
   - conditions:
@@ -1118,8 +1278,9 @@ rules:
       - garbage
 
   # Cluster jewels
-  {%- for index, row in ctx.cluster_jewels: %}
-  {%- if row.cluster_jewel_enchantment: %}
+  {%- set clusters_topk, clusters_show, _ = options.thresholds.cluster_jewels.get_tiered_results(ctx.cluster_jewels) -%}
+  {%- for index, row in clusters_topk.iterrows(): %}
+  {# {%- if row.cluster_jewel_enchantment: %} #}
   - conditions:
       ItemLevel: {'>=': '{{ row.level_required }}'}
       Rarity: {'<=': Rare}
@@ -1142,8 +1303,44 @@ rules:
           thresholds=options.thresholds.cluster_jewels,
           overview=ctx.cluster_jewels,
       ) }}
-  {%- endif %}
+  {# {%- endif %} #}
   {%- endfor %}
+
+  {% for group, df in clusters_show.groupby([
+        "cluster_jewel_passives",
+        "cluster_jewel_enchantment",
+        "level_required"]): %}
+  {%- set cluster_jewel_passives, cluster_jewel_enchantment, level_required = group -%}
+  - conditions:
+      ItemLevel: {'>=': '{{ level_required }}'}
+      Rarity: {'<=': Rare}
+      EnchantmentPassiveNode: {'==': '{{ cluster_jewel_enchantment }}'}
+      EnchantmentPassiveNum: {'==': '{{ cluster_jewel_passives }}'}
+    actions:
+      {{ set_colors_from_colormap(
+            options.colormaps.cluster_jewels,
+            df.chaos_value.mean(),
+      ) }}
+      {{ set_tts_alertsound_range(
+            "cluster jewel",
+            df.chaos_value.min(),
+            df.chaos_value.max(),
+      ) }}
+    tags:
+      - cluster_jewels
+      {%- for tag in options.thresholds.cluster_jewels.get_tags(df, overview=ctx.cluster_jewels): %}
+      - {{ tag }}
+      {%- endfor %}
+  {% endfor %}
+
+  - conditions:
+      BaseType: Cluster Jewel
+      Rarity: {'<=': 'Rare'}
+    actions:
+      {{ set_colors_from_colormap(options.colormaps.cluster_jewels, 1, vmax=20) }}
+    tags:
+      - cluster_jewels
+      - garbage
 
   # Double corrupted jewels
   - conditions:
@@ -1159,7 +1356,7 @@ rules:
       - jewels
       - valuable
 
-  # Six-linked items (jeweller's orb recipe)
+  # Six-linked items (divine recipe)
   - conditions:
       LinkedSockets: 6
     actions:

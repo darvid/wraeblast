@@ -39,6 +39,7 @@ jobs:
       - name: Test with pytest
         run: |
           poetry run pytest -vvv
+
   qa:
     name: Quality checks
     runs-on: ubuntu-latest
@@ -84,6 +85,7 @@ jobs:
         run: |
           new_sha=$(git rev-parse HEAD)
           echo "::set-output name=SHA::$new_sha"
+
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
