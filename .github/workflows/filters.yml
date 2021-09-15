@@ -12,6 +12,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Prepare list of filter options
         run: |
+          sudo apt-get update
           sudo apt-get install jq
           echo "::set-output name=matrix::$(bash ./filters/list.sh ./filters 109 | jq -R . | jq -cs .)"
         id: set-matrix
@@ -27,6 +28,7 @@ jobs:
         uses: actions/setup-python@v2
       - name: Install dependencies
         run: |
+          sudo apt-get update
           sudo apt-get install awscli -y
           python -m pip install --upgrade poetry
           poetry install
