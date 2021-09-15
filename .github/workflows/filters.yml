@@ -114,13 +114,11 @@ jobs:
         run: |
           zip -r wraeblast-tts-${{ steps.date.outputs.date }}.zip FilterSounds
           zip -r wraeblast-filters-nightly-${{ steps.date.outputs.date }}.zip **/*.filter FilterSounds
-      - uses: meeDamian/github-release@2.0
+      - uses: softprops/action-gh-release@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ env.RELEASE_TAG }}
+          tag_name: ${{ env.RELEASE_TAG }}
           name: ${{ env.RELEASE_NAME }}
-          allow_override: true
-          gzip: false
           files: |
             **/*.filter
             *.zip
