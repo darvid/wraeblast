@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.1.2 (2021-09-15)
+### Fix
+* **filtering:** :bug: Decrement quantile labels, add alt quality columns ([`3c6017b`](https://github.com/darvid/wraeblast/commit/3c6017b1071bee76cb70386b493f7c2a34e3bf53))
+
 ## v0.1.1 (2021-09-15)
 ### Fix
 * **cmd:** :bug: Fix no_sync option in render not being respected ([`2bdefd7`](https://github.com/darvid/wraeblast/commit/2bdefd77d03736618194661f41565e5f60a8587d))
