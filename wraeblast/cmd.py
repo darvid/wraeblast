@@ -88,7 +88,7 @@ class RenderFilterCommand(BaseCommand):
         filter_context = loop.run_until_complete(
             insights.initialize_filter_context(
                 league=league,
-                no_sync=True,
+                no_sync=bool(self.option("no-sync")),
             ),
         )
         if options_filename:
