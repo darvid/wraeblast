@@ -254,6 +254,7 @@ def tts_polly(
     engine: str = "neural",
     sample_rate: int = 24_000,
     force_create: bool = False,
+    volume: str = "x-loud",
 ) -> None:
     bucket_name = get_tts_bucket_name()
     objects = list_tts_s3()
@@ -269,7 +270,8 @@ def tts_polly(
         Engine=engine,
         OutputFormat="mp3",
         SampleRate=str(sample_rate),
-        Text=s,
+        Text=f'<prosody volume="{volume}">{s}</prosody>',
+        TextType="ssml",
         VoiceId=voice_id,
     )
     audio = response["AudioStream"].read()
