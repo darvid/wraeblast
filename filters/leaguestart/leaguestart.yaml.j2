@@ -156,6 +156,7 @@ presets:
         - [base_types, normal]
         - skill_gems
       visible:
+        - [base_types, heist]
         - [skill_gems, awakened]
         - [skill_gems, beach]
         - [skill_gems, quality]
@@ -512,6 +513,18 @@ rules:
       - maps
       - invitations
 
+  # Heist Contracts/Blueprints
+  - conditions:
+      Class:
+        - Blueprint
+        - Contract
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.maps, 15, vmax=20) }}
+      CustomAlertSound: {{ tts("Heist Contract") }}
+    tags:
+      - maps
+      - heist
+
   # Blighted Maps
   - conditions:
       Class: Maps
@@ -568,6 +581,7 @@ rules:
   - conditions:
       Class:
         - Incursion Item
+        - Heist Target
         - Pantheon Soul
         - Quest
     actions:
@@ -806,6 +820,20 @@ rules:
       {{ macros.set_colors_from_colormap(options.colormaps.flasks, 1, vmax=20) }}
     tags:
       - flasks
+
+  # Heist Gear
+  - conditions:
+      Class:
+        - Heist Gear
+        - Heist Brooch
+        - Heist Tool
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.base_types, 15, vmax=20) }}
+      CustomAlertSound: '{{ tts("Heist Gear") }}'
+    tags:
+      - gear
+      - base_types
+      - heist
 
   # Base Types - Rare
   - conditions:
