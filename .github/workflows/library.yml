@@ -39,6 +39,7 @@ jobs:
       - name: Test with pytest
         run: |
           poetry run pytest -vvv
+        continue-on-error: true
 
   qa:
     name: Quality checks
