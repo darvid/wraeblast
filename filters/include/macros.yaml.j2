@@ -1,0 +1,144 @@
+{%- macro set_colors(color): -%}
+      SetBackgroundColor: '{{ color.hex }}'
+      SetBorderColor: '{{ text_color(color) }}'
+      SetTextColor: '{{ text_color(color) }}'
+{%- endmacro -%}
+
+{%- macro set_colors_from_colormap(colormap, value, vmax=None, lum_threshold=0.5): -%}
+  {%- set color = colormap.pick(value, vmax=vmax) -%}
+      SetBackgroundColor: '{{ color.hex }}'
+      SetBorderColor: '{{ text_color(color, lum_threshold=lum_threshold) }}'
+      SetTextColor: '{{ text_color(color, lum_threshold=lum_threshold) }}'
+{%- endmacro -%}
+
+{%- macro set_preset_quantile_tags(hidden=True): -%}
+{%- for category, threshold in options.thresholds.items(): -%}
+{%- if threshold.quantile is defined: -%}
+{%- for tag in get_quantile_threshold_tags(threshold.quantile, mask=hidden): %}
+- [{{ category }}, {{tag}}]
+{%- endfor -%}
+{%- endif -%}
+{%- endfor -%}
+{%- endmacro -%}
+
+{%- macro set_tags(row, thresholds=None, stack_size=1, ctx_key=None): -%}
+    {%- for tag in get_stack_tags(stack_size): %}
+      - '{{ tag }}'
+    {%- endfor -%}
+    {%- if row is not number: -%}
+    {%- for tag in get_item_tags(row): %}
+      - '{{ tag }}'
+    {%- endfor -%}
+    {%- endif -%}
+    {%- if thresholds: -%}
+    {%- for tag in thresholds.get_tags(
+          row,
+          stack_size,
+          ctx=ctx if ctx_key else None,
+          ctx_key=ctx_key
+    ): %}
+      - '{{ tag }}'
+    {%- endfor -%}
+    {%- endif -%}
+{%- endmacro -%}
+
+{%- macro set_tts_alertsound(
+      row,
+      name=None,
+      thresholds=None,
+      stack_size=1,
+      tts_voice="Aria",
+      tts_prefix="FilterSounds/tts"
+): -%}
+  {%- if not thresholds or thresholds.check_visibility(row): -%}
+  {%- set chaos_value = row.chaos_value * stack_size -%}
+  {%- if row.item_name != "Chaos Orb" and chaos_value >= 1: %}
+      CustomAlertSound: '{{
+        tts("{} {}".format(
+          row.item_name if name == None else name,
+          ctx.get_display_value(chaos_value)
+          if chaos_value >= 1.0 else "",
+        ).strip(), prefix=tts_prefix, voice_id=tts_voice)
+      }}'
+  {%- endif -%}
+  {%- endif %}
+{%- endmacro -%}
+
+{%- macro set_tts_alertsound_range(
+      tts_phrase,
+      chaos_value_min,
+      chaos_value_max=None,
+      tts_voice="Aria",
+      tts_prefix="FilterSounds/tts"
+): -%}
+  {%- set value_min = ctx.get_display_value(chaos_value_min) -%}
+  {%- set value_max = ctx.get_display_value(chaos_value_max) -%}
+      CustomAlertSound: '{{
+        tts("{} {}{}".format(
+          tts_phrase,
+          value_min,
+          (
+            " to {}".format(value_max)
+            if chaos_value_max > chaos_value_min and value_min != value_max else ""
+          ),
+        ).strip(), prefix=tts_prefix, voice_id=tts_voice)
+      }}'
+{%- endmacro -%}
+
+{%- macro multi_base_type_by_quantile(
+      ctx_key,
+      thresholds,
+      query="",
+      groups=["quintile"],
+      tags=[],
+      conditions={},
+      base_type_field="base_type",
+      tts_phrase="base item"): -%}
+  {%- set df = ctx.data[ctx_key] if not query else ctx.data[ctx_key].query(query) -%}
+  {%- set df = df.query(thresholds.get_dataframe_query()) -%}
+  {%- for group, rows in df.groupby(groups): %}
+  {%- if not rows.empty: %}
+  - conditions:
+      BaseType:
+        {%- for base_type in rows.groupby(base_type_field).groups.keys(): %}
+        - "{{ base_type }}"
+        {%- endfor %}
+      {%- if "map_tier" in groups: %}
+      MapTier: {'>=': '{{ rows.iloc[0].map_tier|int }}'}
+      {%- endif %}
+      {%- if "level_required" in groups: %}
+      ItemLevel: {'>=': '{{ group[groups.index("level_required")]|int }}'}
+      {%- endif %}
+      {%- if "influences" in groups: %}
+      {%- set influences = group[groups.index("influences")].split("/") %}
+      HasInfluence:
+      {%- for influence in influences: %}
+        - {{ influence or "None" }}
+      {%- endfor %}
+      {%- endif %}
+      {% for key, value in conditions.items(): -%}
+      {{ key }}: {{ value }}
+      {%- endfor %}
+    actions:
+      {{ set_colors_from_colormap(
+          options.colormaps.uniques,
+          rows["chaos_value"].min(),
+          vmax=ctx.data[ctx_key]["chaos_value"].max(),
+      ) }}
+      {%- if thresholds.check_visibility(rows.iloc[0]): %}
+      {{ set_tts_alertsound_range(
+            tts_phrase,
+            rows["chaos_value"].min(),
+            rows["chaos_value"].max(),
+      ) }}
+      {%- endif %}
+    tags:
+      {%- for tag in tags: %}
+      - {{ tag }}
+      {%- endfor -%}
+      {%- for tag in thresholds.get_tags(rows.iloc[0]): %}
+      - {{ tag }}
+      {%- endfor -%}
+  {%- endif %}
+  {%- endfor %}
+{%- endmacro -%}

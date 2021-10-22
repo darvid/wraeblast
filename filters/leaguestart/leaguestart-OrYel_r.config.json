@@ -1,0 +1,96 @@
+{
+    "thresholds": {
+        "artifacts": {},
+        "base_types": {},
+        "blighted_maps": {},
+        "cluster_jewels": {},
+        "currencies": {},
+        "delirium_orbs": {},
+        "divination_cards": {},
+        "essences": {},
+        "fossils": {},
+        "fragments": {},
+        "incubators": {},
+        "maps": {},
+        "oils": {},
+        "prophecies": {},
+        "scarabs": {},
+        "skill_gems": {},
+        "uniques": {},
+        "vials": {},
+        "watchstones": {}
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "OrYel_7_r"
+        },
+        "cluster_jewels": {
+            "name": "OrYel_7_r"
+        },
+        "currencies": {
+            "name": "OrYel_7_r"
+        },
+        "delirium_orbs": {
+            "name": "OrYel_7_r"
+        },
+        "divination_cards": {
+            "name": "OrYel_7_r"
+        },
+        "essences": {
+            "name": "OrYel_7_r"
+        },
+        "flasks": {
+            "name": "OrYel_7_r"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "OrYel_7_r"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "OrYel_7_r",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "OrYel_7_r"
+        },
+        "oils": {
+            "name": "OrYel_7_r"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "scarabs": {
+            "name": "OrYel_7_r"
+        },
+        "skill_gems": {
+            "name": "OrYel_7_r"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "OrYel_7_r"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}

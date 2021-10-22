@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 import asyncio
+import functools
 import json
 import pathlib
 import sys
+from typing import Any, Optional
 
 import cleo
 import mergedeep
@@ -24,6 +26,16 @@ default_threshold_overrides = {
     "uniques": {"quantile": "QU4"},
     "vials": {"quantile": "QU2"},
 }
+secondary_colormap_categories = (
+    "base_types",
+    "uniques",
+    "fragments",
+    "artifacts",
+    "prophecies",
+    "vials",
+    "fossils",
+    "resonators",
+)
 sequential_colormaps = [
     "BluGrn_7",
     "BluYl_7",
@@ -90,6 +102,55 @@ def get_thresholds(df: pd.DataFrame) -> pd.DataFrame:
     return grouped.agg({"chaos_value": ["min"]})
 
 
+def write_config(
+    name: str,
+    colormap: str,
+    tag: Optional[str] = None,
+    quantile: Optional[list[str]] = None,
+    secondary_colormap: Optional[str] = None,
+    output_directory: str = ".",
+    overrides: dict[str, Any] = None,
+    json_indent: int = 4,
+):
+    if tag is not None:
+        tag = tag.lstrip("-")
+        tag = (
+            f"-{quantile}"
+            if tag == "QUANTILE" and quantile is not None
+            else (f"-{tag}" if tag != "QUANTILE" else "")
+        )
+    else:
+        tag = ""
+    template_config = config.default_options.copy()
+    colormap_name = colormap.rstrip("_r").rsplit("_", maxsplit=1)[0]
+    if colormap.endswith("_r"):
+        colormap_name += "_r"
+    filename = f"{name}{tag}-{colormap_name}.config.json"
+
+    for category in template_config["thresholds"]:
+        if quantile is not None:
+            template_config["thresholds"][category]["quantile"] = quantile
+        elif "quantile" in template_config["thresholds"][category]:
+            template_config["thresholds"][category].pop("quantile")
+
+    if overrides is not None:
+        mergedeep.merge(template_config["thresholds"], overrides)
+
+    for key in template_config["colormaps"]:
+        if key in ("life_flasks", "mana_flasks"):
+            continue
+        template_config["colormaps"][key]["name"] = (
+            secondary_colormap
+            if key in secondary_colormap_categories
+            else colormap
+        )
+    parent_dir = pathlib.Path(output_directory)
+    parent_dir.mkdir(exist_ok=True)
+    with open(parent_dir / filename, "w") as f:
+        f.write(json.dumps(template_config, indent=json_indent))
+    return filename
+
+
 class BuildCommand(cmd.BaseCommand):
     """Generate filter options from a matrix of colormaps and thresholds.
 
@@ -101,7 +162,7 @@ class BuildCommand(cmd.BaseCommand):
             all sequential colormaps)}
         {--C|secondary-colormap=Turbid_20_r : Complimentary colormap
             used for base items, uniques, etc.}
-        {--t|tag=TAG : Tag filter filename (defaults to each quantile)}
+        {--t|tag=QUANTILE : Tag filter filename (defaults to each quantile)}
         {--l|league=TEMP : Current league name}
         {--O|override-thresholds=OVERRIDES : JSON formatted overrides}
         {--o|output-directory=filters : Output directory}
@@ -111,7 +172,9 @@ class BuildCommand(cmd.BaseCommand):
     def handle(self) -> None:
         filter_name = str(self.argument("filter-name"))
         thresholds = str(self.argument("thresholds"))
-        if thresholds.upper() == "ALL":
+        if thresholds.upper() == "NONE":
+            quantiles = None
+        elif thresholds.upper() == "ALL":
             quantiles = [f"QU{i}" for i in range(1, 6)]
         else:
             quantiles = [q.strip() for q in thresholds.split(",")]
@@ -130,40 +193,21 @@ class BuildCommand(cmd.BaseCommand):
         output_directory = pathlib.Path(str(self.option("output-directory")))
         # league = str(self.option("league"))
         for colormap in colormaps:
-            colormap_name = colormap.rstrip("_r").rsplit("_", maxsplit=1)[0]
-            if colormap.endswith("_r"):
-                colormap_name += "_r"
-            for quantile in quantiles:
-                filter_tag = quantile if tag == "TAG" else tag
-                filename = (
-                    f"{filter_name}-{filter_tag}"
-                    f"-{colormap_name}.config.json"
-                )
-                self.line(f"<info>Generating {filename}</info>")
-                template_config = config.default_options.copy()
-                for category in template_config["thresholds"]:
-                    template_config["thresholds"][category][
-                        "quantile"
-                    ] = quantile
-                mergedeep.merge(template_config["thresholds"], overrides)
-                for key in template_config["colormaps"]:
-                    template_config["colormaps"][key]["name"] = (
-                        secondary_colormap
-                        if key
-                        in (
-                            "base_types",
-                            "uniques",
-                            "fragments",
-                            "artifacts",
-                            "prophecies",
-                            "vials",
-                            "fossils",
-                            "resonators",
-                        )
-                        else colormap
-                    )
-                with open(output_directory / filename, "w") as f:
-                    f.write(json.dumps(template_config, indent=4))
+            config_writer = functools.partial(
+                write_config,
+                name=filter_name,
+                colormap=colormap,
+                secondary_colormap=secondary_colormap,
+                tag=tag,
+                output_directory=output_directory,
+            )
+            if quantiles is not None:
+                for quantile in quantiles:
+                    filename = config_writer(quantile=quantile)
+                    self.line(f"<info>Wrote {filename}</info>")
+            else:
+                filename = config_writer(quantile=None)
+                self.line(f"<info>Wrote {filename}</info>")
 
 
 class RankingsCommand(cmd.BaseCommand):
@@ -183,8 +227,7 @@ class RankingsCommand(cmd.BaseCommand):
         )
         category = str(self.argument("category"))
 
-        overview = getattr(filter_context, category)
-        df = overview.df
+        df = filter_context.data[category]
         quantile_labels = insights.quantiles.keys()
         table = self.table()
         table.set_header_row(
@@ -202,7 +245,7 @@ class RankingsCommand(cmd.BaseCommand):
             table.add_row(
                 [
                     str(index),
-                    str(row["name"]),
+                    str(row["item_name"]),
                     str(row["chaos_value"]),
                     *quantiles,
                 ]

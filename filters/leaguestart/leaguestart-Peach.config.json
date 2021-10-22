@@ -1,0 +1,96 @@
+{
+    "thresholds": {
+        "artifacts": {},
+        "base_types": {},
+        "blighted_maps": {},
+        "cluster_jewels": {},
+        "currencies": {},
+        "delirium_orbs": {},
+        "divination_cards": {},
+        "essences": {},
+        "fossils": {},
+        "fragments": {},
+        "incubators": {},
+        "maps": {},
+        "oils": {},
+        "prophecies": {},
+        "scarabs": {},
+        "skill_gems": {},
+        "uniques": {},
+        "vials": {},
+        "watchstones": {}
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Peach_7"
+        },
+        "cluster_jewels": {
+            "name": "Peach_7"
+        },
+        "currencies": {
+            "name": "Peach_7"
+        },
+        "delirium_orbs": {
+            "name": "Peach_7"
+        },
+        "divination_cards": {
+            "name": "Peach_7"
+        },
+        "essences": {
+            "name": "Peach_7"
+        },
+        "flasks": {
+            "name": "Peach_7"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Peach_7"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "Peach_7",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Peach_7"
+        },
+        "oils": {
+            "name": "Peach_7"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "scarabs": {
+            "name": "Peach_7"
+        },
+        "skill_gems": {
+            "name": "Peach_7"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "Peach_7"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}

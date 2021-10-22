@@ -1,0 +1,96 @@
+{
+    "thresholds": {
+        "artifacts": {},
+        "base_types": {},
+        "blighted_maps": {},
+        "cluster_jewels": {},
+        "currencies": {},
+        "delirium_orbs": {},
+        "divination_cards": {},
+        "essences": {},
+        "fossils": {},
+        "fragments": {},
+        "incubators": {},
+        "maps": {},
+        "oils": {},
+        "prophecies": {},
+        "scarabs": {},
+        "skill_gems": {},
+        "uniques": {},
+        "vials": {},
+        "watchstones": {}
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "GnBu_9"
+        },
+        "cluster_jewels": {
+            "name": "GnBu_9"
+        },
+        "currencies": {
+            "name": "GnBu_9"
+        },
+        "delirium_orbs": {
+            "name": "GnBu_9"
+        },
+        "divination_cards": {
+            "name": "GnBu_9"
+        },
+        "essences": {
+            "name": "GnBu_9"
+        },
+        "flasks": {
+            "name": "GnBu_9"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "GnBu_9"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "GnBu_9",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "GnBu_9"
+        },
+        "oils": {
+            "name": "GnBu_9"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "scarabs": {
+            "name": "GnBu_9"
+        },
+        "skill_gems": {
+            "name": "GnBu_9"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "GnBu_9"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}

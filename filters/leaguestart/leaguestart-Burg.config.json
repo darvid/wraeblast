@@ -1,0 +1,96 @@
+{
+    "thresholds": {
+        "artifacts": {},
+        "base_types": {},
+        "blighted_maps": {},
+        "cluster_jewels": {},
+        "currencies": {},
+        "delirium_orbs": {},
+        "divination_cards": {},
+        "essences": {},
+        "fossils": {},
+        "fragments": {},
+        "incubators": {},
+        "maps": {},
+        "oils": {},
+        "prophecies": {},
+        "scarabs": {},
+        "skill_gems": {},
+        "uniques": {},
+        "vials": {},
+        "watchstones": {}
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Burg_7"
+        },
+        "cluster_jewels": {
+            "name": "Burg_7"
+        },
+        "currencies": {
+            "name": "Burg_7"
+        },
+        "delirium_orbs": {
+            "name": "Burg_7"
+        },
+        "divination_cards": {
+            "name": "Burg_7"
+        },
+        "essences": {
+            "name": "Burg_7"
+        },
+        "flasks": {
+            "name": "Burg_7"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Burg_7"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "Burg_7",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Burg_7"
+        },
+        "oils": {
+            "name": "Burg_7"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "scarabs": {
+            "name": "Burg_7"
+        },
+        "skill_gems": {
+            "name": "Burg_7"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "Burg_7"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}

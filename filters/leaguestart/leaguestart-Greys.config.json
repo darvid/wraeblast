@@ -1,0 +1,96 @@
+{
+    "thresholds": {
+        "artifacts": {},
+        "base_types": {},
+        "blighted_maps": {},
+        "cluster_jewels": {},
+        "currencies": {},
+        "delirium_orbs": {},
+        "divination_cards": {},
+        "essences": {},
+        "fossils": {},
+        "fragments": {},
+        "incubators": {},
+        "maps": {},
+        "oils": {},
+        "prophecies": {},
+        "scarabs": {},
+        "skill_gems": {},
+        "uniques": {},
+        "vials": {},
+        "watchstones": {}
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Greys_9"
+        },
+        "cluster_jewels": {
+            "name": "Greys_9"
+        },
+        "currencies": {
+            "name": "Greys_9"
+        },
+        "delirium_orbs": {
+            "name": "Greys_9"
+        },
+        "divination_cards": {
+            "name": "Greys_9"
+        },
+        "essences": {
+            "name": "Greys_9"
+        },
+        "flasks": {
+            "name": "Greys_9"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Greys_9"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "Greys_9",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Greys_9"
+        },
+        "oils": {
+            "name": "Greys_9"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "scarabs": {
+            "name": "Greys_9"
+        },
+        "skill_gems": {
+            "name": "Greys_9"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "Greys_9"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}

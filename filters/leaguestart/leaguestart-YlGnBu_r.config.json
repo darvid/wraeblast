@@ -1,0 +1,96 @@
+{
+    "thresholds": {
+        "artifacts": {},
+        "base_types": {},
+        "blighted_maps": {},
+        "cluster_jewels": {},
+        "currencies": {},
+        "delirium_orbs": {},
+        "divination_cards": {},
+        "essences": {},
+        "fossils": {},
+        "fragments": {},
+        "incubators": {},
+        "maps": {},
+        "oils": {},
+        "prophecies": {},
+        "scarabs": {},
+        "skill_gems": {},
+        "uniques": {},
+        "vials": {},
+        "watchstones": {}
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "YlGnBu_9_r"
+        },
+        "cluster_jewels": {
+            "name": "YlGnBu_9_r"
+        },
+        "currencies": {
+            "name": "YlGnBu_9_r"
+        },
+        "delirium_orbs": {
+            "name": "YlGnBu_9_r"
+        },
+        "divination_cards": {
+            "name": "YlGnBu_9_r"
+        },
+        "essences": {
+            "name": "YlGnBu_9_r"
+        },
+        "flasks": {
+            "name": "YlGnBu_9_r"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "YlGnBu_9_r"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "YlGnBu_9_r",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "YlGnBu_9_r"
+        },
+        "oils": {
+            "name": "YlGnBu_9_r"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "scarabs": {
+            "name": "YlGnBu_9_r"
+        },
+        "skill_gems": {
+            "name": "YlGnBu_9_r"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "YlGnBu_9_r"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}

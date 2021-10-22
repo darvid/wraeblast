@@ -1,0 +1,863 @@
+{%- import "include/macros.yaml.j2" as macros -%}
+
+{%- set t0_currencies = (
+  "Albino Rhoa Feather",
+  "Mirror of Kalandra",
+  "Mirror Shard",
+  "Exalted Orb",
+  "Elevated Sextant"
+) %}
+{%- set t1_currencies = (
+  "Annulment Shard",
+  "Chaos Orb",
+  "Crescent Splinter",
+  "Divine Orb",
+  "Exalted Shard",
+  "Orb of Alchemy",
+  "Orb of Annulment",
+  "Orb of Unmaking",
+  "Veiled Chaos Orb"
+) -%}
+{%- set t2_currencies = (
+  "Ancient Orb",
+  "Awakened Sextant",
+  "Prime Sextant",
+  "Regal Orb",
+  "Ritual Splinter",
+  "Ritual Vessel",
+  "Simple Sextant",
+  "Stacked Deck"
+) -%}
+
+{%- set t1_fragments = (
+  "Ancient Reliquary Key",
+  "Chayula's Pure Breachstone",
+  "Vaal Reliquary Key",
+  "Chayula's Enriched Breachstone",
+  "The Maven's Writ",
+  "Chayula's Breachstone",
+  "Simulacrum",
+  "Chayula's Charged Breachstone",
+  "Fragment of Shape",
+  "Fragment of Knowledge",
+  "Uul-Netol's Pure Breachstone",
+  "Uul-Netol's Enriched Breachstone",
+  "Timeless Maraketh Emblem",
+  "Gift to the Goddess",
+  "Timeless Templar Emblem",
+  "Esh's Pure Breachstone",
+  "Tul's Pure Breachstone",
+  "Xoph's Pure Breachstone",
+  "Fragment of Emptiness",
+  "Fragment of Terror",
+  "Tul's Enriched Breachstone",
+  "Uul-Netol's Charged Breachstone",
+  "Uul-Netol's Breachstone",
+  "Esh's Enriched Breachstone",
+  "Crescent Splinter"
+) -%}
+
+{%- set t2_fragments = (
+  "Yriel's Key",
+  "Fragment of Eradication",
+  "Fragment of Constriction",
+  "Fragment of Purification",
+  "Fragment of Enslavement",
+  "Xoph's Enriched Breachstone",
+  "Fragment of the Chimera",
+  "Tul's Charged Breachstone",
+  "Dedication to the Goddess",
+  "Fragment of the Phoenix",
+  "Volkuur's Key",
+  "Fragment of the Minotaur",
+  "Fragment of the Hydra",
+  "Timeless Eternal Emblem",
+  "Timeless Vaal Emblem",
+  "Inya's Key",
+  "Timeless Karui Emblem",
+  "Tul's Breachstone",
+  "Mortal Ignorance",
+  "Eber's Key",
+  "Xoph's Charged Breachstone",
+  "Esh's Charged Breachstone",
+  "Xoph's Breachstone",
+  "Mortal Hope",
+  "Esh's Breachstone",
+  "Mortal Grief",
+  "Mortal Rage",
+  "Splinter of Chayula",
+  "Tribute to the Goddess"
+) -%}
+
+{%- set t3_fragments = (
+  "Sacrifice at Midnight",
+  "Timeless Templar Splinter",
+  "Divine Vessel",
+  "Offering to the Goddess",
+  "Sacrifice at Dawn",
+  "Timeless Maraketh Splinter",
+  "Sacrifice at Noon",
+  "Splinter of Uul-Netol",
+  "Simulacrum Splinter",
+  "Sacrifice at Dusk",
+  "Splinter of Esh",
+  "Splinter of Tul",
+  "Splinter of Xoph",
+  "Timeless Eternal Empire Splinter",
+  "Timeless Karui Splinter",
+  "Timeless Vaal Splinter",
+) -%}
+
+{%- set t1_oils = (
+  "Golden Oil",
+  "Opalescent Oil",
+  "Silver Oil"
+) -%}
+
+{# Scourge #}
+{# {%- set t0_currencies = t0_currencies + (
+  "Tainted Exalted Orb",
+  "Sacred Orb",
+) -%}
+{%- set t1_currencies = t1_currencies + (
+  "Tainted Chaos Orb",
+  "Tainted Divine Teardrop",
+  "Tainted Blessing",
+) -%} #}
+{# {%- set t2_currencies = t2_currencies + (
+  "Tainted Mythic Orb"
+) %} #}
+{# {%- set t1_fragments = t1_fragments + (
+  "Chayula's Flawless Breachstone",
+  "Xoph's Flawless Breachstone",
+  "Esh's Flawless Breachstone",
+  "Tul's Flawless Breachstone",
+  "Uul-Netol's Flawless Breachstone",
+  "Unrelenting Timeless Maraketh Emblem",
+  "Unrelenting Timeless Templar Emblem",
+  "Unrelenting Timeless Eternal Emblem",
+  "Unrelenting Timeless Vaal Emblem",
+  "Unrelenting Timeless Karui Emblem"
+) -%} #}
+
+{%- set all_fragments = {
+      "t1": t1_fragments,
+      "t2": t2_fragments,
+      "t3": t3_fragments
+} -%}
+
+
+---
+presets:
+  default:
+    tags:
+      hidden:
+        - [base_types, magic]
+        - [base_types, normal]
+        - skill_gems
+      visible:
+        - [skill_gems, awakened]
+        - [skill_gems, beach]
+        - [skill_gems, quality]
+        - [skill_gems, vaal]
+styles:
+  default:
+    actions:
+      SetFontSize: 45
+      DisableDropSound: true
+  quest_items:
+    actions:
+      MinimapIcon: [0, Green, Hexagon]
+      SetBackgroundColor: green
+      SetBorderColor: white
+      SetTextColor: white
+    tags:
+      - quest_items
+  currencies:
+    actions:
+      MinimapIcon:
+        - 2
+        - {{ nearest_named_color(options.colormaps.currencies.name, 5, vmax=20) }}
+        - Circle
+    tags:
+      - currencies
+      - fragments
+  currencies.t2:
+    actions:
+      MinimapIcon:
+        - 1
+        - {{ nearest_named_color(options.colormaps.currencies.name, 10, vmax=20) }}
+        - Circle
+    tags:
+      - [currencies, t2]
+      - [fragments, t2]
+  currencies.t1:
+    actions:
+      MinimapIcon:
+        - 0
+        - {{ nearest_named_color(options.colormaps.currencies.name, 15, vmax=20) }}
+        - Star
+    tags:
+      - [currencies, t1]
+      - [fragments, t1]
+  currencies.t0:
+    actions:
+      MinimapIcon:
+        - 0
+        - {{ nearest_named_color(options.colormaps.currencies.name, 20, vmax=20) }}
+        - Star
+    tags:
+      - [currencies, t0]
+      - [fragments, t0]
+  six_links:
+    actions:
+      MinimapIcon:
+        - 1
+        - {{ nearest_named_color(options.colormaps.base_types.name, 20, vmax=20) }}
+        - Hexagon
+    tags:
+      - six_links
+  six_sockets:
+    actions:
+      MinimapIcon:
+        - 2
+        - {{ nearest_named_color(options.colormaps.base_types.name, 20, vmax=20) }}
+        - Hexagon
+    tags:
+      - six_sockets
+  uniques:
+    actions:
+      MinimapIcon:
+        - 0
+        - {{ nearest_named_color(options.colormaps.uniques.name, 15, vmax=20) }}
+        - Star
+    tags:
+      - uniques
+  maps:
+    actions:
+      MinimapIcon:
+        - 0
+        - {{ nearest_named_color(options.colormaps.maps.name, 15, vmax=20) }}
+        - Square
+    tags:
+      - maps
+  blighted_maps:
+    actions:
+      MinimapIcon:
+        - 0
+        - {{ nearest_named_color(options.colormaps.blighted_maps.name, 20, vmax=20) }}
+        - Square
+    tags:
+      - blighted_maps
+rules:
+  - conditions:
+      BaseType:
+        - Portal Scroll
+        - Scroll of Wisdom
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.currencies, 1, vmax=20) }}
+    tags: [scrolls]
+
+  # T0 Currencies
+  {%- for currency_name in t0_currencies: %}
+  - conditions:
+      BaseType: {{ currency_name }}
+      Class: Currency
+    actions:
+      CustomAlertSound: '{{ tts(currency_name) }}'
+      {{ macros.set_colors_from_colormap(options.colormaps.currencies, 20, vmax=20) }}
+    tags:
+      - currencies
+      - t0
+  {%- endfor %}
+
+  # T1 Currencies
+  {%- for currency_name in t1_currencies: %}
+  {%- for op, stack_size in iter_stacks(1, 10): %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class: Currency
+      BaseType: {'==': {{ currency_name }}}
+    actions:
+      CustomAlertSound: '{{ tts("{} {}".format(stack_size, currency_name)) }}'
+      {{ macros.set_colors_from_colormap(options.colormaps.currencies, 15, vmax=20) }}
+    tags:
+      - currencies
+      - t1
+  {%- endfor %}
+  {%- endfor %}
+
+  # T2 Currencies
+  {%- for currency_name in t2_currencies: %}
+  {%- for op, stack_size in iter_stacks(1, 10): %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class: Currency
+      BaseType: {{ currency_name }}
+    actions:
+      CustomAlertSound: '{{ tts("{} {}".format(stack_size, currency_name)) }}'
+      {{ macros.set_colors_from_colormap(options.colormaps.currencies, 10, vmax=20) }}
+    tags:
+      - currencies
+      - t2
+  {%- endfor %}
+  {%- endfor %}
+
+  # Catalysts
+  - conditions:
+      Class: Currency
+      BaseType: Catalyst
+    actions:
+      CustomAlertSound: '{{ tts("Catalyst") }}'
+    tags:
+      - currencies
+      - catalysts
+
+  # T1 Fragments
+  {%- for tier, fragments in all_fragments.items(): %}
+  {%- for fragment_name in fragments: %}
+  {% if (
+      "Emblem" in fragment_name
+      or "Fragment" in fragment_name
+      or "Mortal" in fragment_name
+      or "Offering" in fragment_name
+      or "Sacrifice" in fragment_name
+      or "Splinter" in fragment_name
+  ): %}
+  {%- for op, stack_size in iter_stacks(1, 10): %}
+  - conditions:
+      StackSize: { '{{op}}': {{stack_size}} }
+      Class:
+        - Currency
+        - Map Fragments
+      BaseType: {'==': {{ fragment_name }}}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.fragments, 20, vmax=20) }}
+      CustomAlertSound: {{ tts("{} {}".format(stack_size, fragment_name)) }}
+    tags:
+      - fragments
+      - {{ tier }}
+  {%- endfor %}
+  {% else: %}
+  - conditions:
+      Class:
+        {%- if fragment_name != "Simulacrum": %}
+        - Currency
+        {%- endif %}
+        - Map Fragments
+      BaseType: {'==': {{ fragment_name }}}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.fragments, 20, vmax=20) }}
+      CustomAlertSound: {{ tts(fragment_name) }}
+    tags:
+      - fragments
+      - {{ tier }}
+  {% endif %}
+  {%- endfor %}
+  {%- endfor %}
+
+  # Incubators
+  - conditions:
+      Class: Incubator
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.incubators, 20, vmax=20) }}
+      CustomAlertSound: {{ tts("Incubator") }}
+    tags:
+      - incubators
+
+  # Scarabs
+  - conditions:
+      Class: Map Fragments
+      BaseType: Scarab
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.scarabs, 15, vmax=20) }}
+      CustomAlertSound: {{ tts("Scarab") }}
+    tags:
+      - scarabs
+
+    # Essences
+  - conditions:
+      Class: Currency
+      BaseType: Essence
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.essences, 15, vmax=20) }}
+      CustomAlertSound: {{ tts("Essence") }}
+    tags:
+      - currencies
+      - essences
+
+  # Fossils
+  - conditions:
+      Class: Currency
+      BaseType: Fossil
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.fossils, 15, vmax=20) }}
+      CustomAlertSound: {{ tts("Fossil") }}
+    tags:
+      - currencies
+      - fossils
+
+  # Resonators
+  - conditions:
+      Class: Currency
+      BaseType: Resonator
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.fossils, 20, vmax=20) }}
+      CustomAlertSound: {{ tts("Resonator") }}
+    tags:
+      - currencies
+      - resonators
+
+  # T1 Oils
+  {%- for oil_name in t1_oils: %}
+  - conditions:
+      Class: Currency
+      BaseType: {'==': {{ oil_name }}}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.oils, 20, vmax=20) }}
+      CustomAlertSound: {{ tts(oil_name) }}
+    tags:
+      - currencies
+      - oils
+  {%- endfor %}
+
+  # Oils fallback
+  - conditions:
+      Class: Currency
+      BaseType: Oil
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.oils, 15, vmax=20) }}
+      CustomAlertSound: {{ tts("Oil") }}
+    tags:
+      - currencies
+      - oils
+
+  # Prophecies
+  - conditions:
+      Class: Currency
+      BaseType: {'==': Prophecy}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.prophecies, 15, vmax=20) }}
+      CustomAlertSound: {{ tts("Prophecy") }}
+    tags:
+      - currencies
+      - prophecies
+
+  # Vials
+  - conditions:
+      Class: Currency
+      BaseType: Vial
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.vials, 15, vmax=20) }}
+      CustomAlertSound: {{ tts("Vial") }}
+    tags:
+      - currencies
+      - vials
+
+  # Expedition Artifacts
+  - conditions:
+      Class: Currency
+      BaseType:
+        - Artifact
+        - Astragali
+        - Burial Medallion
+        - Exotic Coinage
+        - Scrap Metal
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.artifacts, 20, vmax=20) }}
+      CustomAlertSound: {{ tts("Artifact") }}
+    tags:
+      - currencies
+      - artifacts
+
+  # Delirium Orbs
+  - conditions:
+      BaseType: Delirium Orb
+      Class: Currency
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.delirium_orbs, 20, vmax=20) }}
+      CustomAlertSound: '{{ tts("Delirium Orb") }}'
+    tags:
+      - delirium_orbs
+
+  # Currencies - Enkindling, Instilling Orbs
+  {%- for currency_prefix in ("Instilling", "Enkindling"): %}
+  - conditions:
+      BaseType: {{ currency_prefix }} Orb
+      Class: Currency
+    actions:
+      CustomAlertSound: '{{ tts("{} Orb".format(currency_prefix)) }}'
+      {{ macros.set_colors_from_colormap(options.colormaps.currencies, 20, vmax=20) }}
+    tags:
+      - currencies
+      - quality
+  {%- endfor %}
+
+  # Currencies fallback
+  - conditions:
+      Class: Currency
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.currencies, 5, vmax=20) }}
+    tags:
+      - currencies
+      - t3
+
+  # Maven's Invitations
+  - conditions:
+      BaseType: "Maven's Invitation"
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.maps, 20, vmax=20) }}
+      CustomAlertSound: {{ tts("Invitation") }}
+    tags:
+      - maps
+      - invitations
+
+  # Blighted Maps
+  - conditions:
+      Class: Maps
+      BlightedMap: true
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.blighted_maps, 15, vmax=20) }}
+      CustomAlertSound: {{ tts("Blighted Map") }}
+    tags:
+      - maps
+      - blighted_maps
+
+  # Maps
+  {%- for map_tier in range(1, 16): %}
+  - conditions:
+      Class: Maps
+      MapTier: {{ map_tier }}
+      AreaLevel:
+        '<=': '{{ 57 + map_tier }}'
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.maps, 15, vmax=20) }}
+      CustomAlertSound: {{ tts("Tier {} Map".format(map_tier)) }}
+    tags:
+      - maps
+  {%- endfor %}
+
+  # Watchstones
+  - conditions:
+      BaseType: Watchstone
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.watchstones, 20, vmax=20) }}
+      CustomAlertSound: {{ tts("Watchstone") }}
+    tags:
+      - watchstones
+
+  # Metamorph
+  - conditions:
+      Class: Metamorph
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.currencies, 5, vmax=20) }}
+      CustomAlertSound: '{{ tts("Metamorph Organ") }}'
+    tags:
+      - metamorph
+      - organs
+
+  # Quest Items - Keys
+  - conditions:
+      BaseType:
+        - Golden Key
+        - Treasure Key
+    tags:
+      - quest_items
+
+  # Quest Items fallback
+  - conditions:
+      Class:
+        - Incursion Item
+        - Pantheon Soul
+        - Quest
+    actions:
+      CustomAlertSound: '{{ tts("Quest Item") }}'
+    tags:
+      - quest_items
+
+  # Uniques
+  - conditions:
+      Rarity: Unique
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.uniques, 1, vmax=20) }}
+    tags:
+      - uniques
+
+  # Cluster Jewels - Large
+  - conditions:
+      BaseType: Large Cluster Jewel
+      Rarity: {'<=': Rare}
+      EnchantmentPassiveNum: 8
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.cluster_jewels, 20, vmax=20) }}
+      CustomAlertSound: '{{ tts("Eight Passive Cluster Jewel") }}'
+    tags:
+      - cluster_jewels
+
+  # Cluster Jewels - Large
+  - conditions:
+      BaseType: Large Cluster Jewel
+      Rarity: {'<=': Rare}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.cluster_jewels, 10, vmax=20) }}
+      CustomAlertSound: '{{ tts("Large Cluster Jewel") }}'
+    tags:
+      - cluster_jewels
+      - large
+
+  # Cluster Jewels - Medium
+  - conditions:
+      BaseType: Medium Cluster Jewel
+      Rarity: {'<=': Rare}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.cluster_jewels, 15, vmax=20) }}
+      CustomAlertSound: '{{ tts("Medium Cluster Jewel") }}'
+    tags:
+      - cluster_jewels
+      - medium
+
+  # Cluster Jewels - Small
+  - conditions:
+      BaseType: Small Cluster Jewel
+      Rarity: {'<=': Rare}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.cluster_jewels, 15, vmax=20) }}
+      CustomAlertSound: '{{ tts("Small Cluster Jewel") }}'
+    tags:
+      - cluster_jewels
+      - small
+
+  # Stygian Vise
+  - conditions:
+      BaseType: Stygian Vise
+      Rarity: {'<=': Rare}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.base_types, 15, vmax=20) }}
+      CustomAlertSound: '{{ tts("Stygian Vise") }}'
+    tags:
+      - jewels
+      - abyss
+
+  # Abyss Jewels
+  - conditions:
+      Class: Abyss Jewel
+      Rarity: {'<=': Rare}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.base_types, 15, vmax=20) }}
+      CustomAlertSound: '{{ tts("Abyss Jewel") }}'
+    tags:
+      - jewels
+      - abyss
+
+  # Double Corrupted Jewels
+  - conditions:
+      BaseType:
+        - Cobalt Jewel
+        - Crimson Jewel
+        - Viridian Jewel
+      Corrupted: true
+      CorruptedMods: {'>=': '2'}
+      Rarity: {'>=': Rare}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.base_types, 20, vmax=20) }}
+      CustomAlertSound: '{{ tts("Double Corrupted Jewel") }}'
+    tags:
+      - double_corrupted
+      - jewels
+
+  # Rare Jewels
+  {%- for jewel_type in ("Cobalt", "Crimson", "Viridian"): %}
+  - conditions:
+      BaseType: {{ jewel_type }} Jewel
+      Rarity: {'<=': Rare}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.base_types, 15, vmax=20) }}
+      CustomAlertSound: '{{ tts("{} Jewel".format(jewel_type)) }}'
+    tags:
+      - jewels
+  {%- endfor %}
+
+  # Skill Gems - Awakened
+  - conditions:
+      Class: Gems
+      BaseType: Awakened
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.skill_gems, 20, vmax=20) }}
+      CustomAlertSound: '{{ tts("Awakened Skill Gem") }}'
+    tags:
+      - skill_gems
+      - awakened
+
+  # Skill Gems - Vaal
+  - conditions:
+      Class: Gems
+      BaseType: Vaal
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.skill_gems, 15, vmax=20) }}
+      CustomAlertSound: '{{ tts("Vaal Skill Gem") }}'
+    tags:
+      - skill_gems
+      - vaal
+
+  # Skill Gems - 15%+
+  - conditions:
+      Class: Gems
+      Quality: {'>=': 15}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.skill_gems, 15, vmax=20) }}
+      CustomAlertSound: '{{ tts("Quality Skill Gem") }}'
+    tags:
+      - skill_gems
+      - quality
+
+  # Skill Gems Level 1
+  - conditions:
+      Class: Gems
+      AreaLevel: "1"
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.skill_gems, 1, vmax=20) }}
+    tags:
+      - skill_gems
+      - beach
+
+  # Skill Gems Fallback
+  - conditions:
+      Class: Gems
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.skill_gems, 1, vmax=20) }}
+    tags:
+      - skill_gems
+
+  # Six-linked Items
+  - conditions:
+      LinkedSockets: 6
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.currencies, 20, vmax=20) }}
+      CustomAlertSound: '{{ tts("Six Link") }}'
+    tags:
+      - six_sockets
+      - six_links
+
+  # Five-linked Items
+  - conditions:
+      LinkedSockets: 5
+      AreaLevel: {'<=': 67}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.currencies, 20, vmax=20) }}
+      CustomAlertSound: '{{ tts("Five Link") }}'
+    tags:
+      - five_links
+
+  # Four-linked Items
+  - conditions:
+      LinkedSockets: 4
+      AreaLevel: {'<=': 67}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.currencies, 20, vmax=20) }}
+      CustomAlertSound: '{{ tts("Four Link") }}'
+    tags:
+      - four_links
+
+  # Six-socket Items
+  - conditions:
+      Sockets: 6
+      Rarity: {'<=': Rare}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.currencies, 1, vmax=20) }}
+      CustomAlertSound: '{{ tts("Six Socket") }}'
+    tags:
+      - six_sockets
+
+  # Flasks - Quality
+  - conditions:
+      Class: Flask
+      Rarity: {'<': Unique}
+      Quality: {'>=': 10}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.flasks, 20, vmax=20) }}
+      CustomAlertSound: '{{ tts("Quality Flask") }}'
+    tags:
+      - flasks
+      - quality
+
+  # Flasks - Life Flasks
+  - conditions:
+      Class: Life Flask
+      Rarity: {'<': Unique}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.life_flasks, 15, vmax=20) }}
+    tags:
+      - flasks
+
+  # Flasks - Mana Flasks
+  - conditions:
+      Class: Mana Flask
+      Rarity: {'<': Unique}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.mana_flasks, 15, vmax=20) }}
+    tags:
+      - flasks
+
+  # Flasks - Unique Flasks
+  - conditions:
+      Class: Flask
+      Rarity: {'<': Unique}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.flasks, 1, vmax=20) }}
+    tags:
+      - flasks
+
+  # Base Types - Rare
+  - conditions:
+      Class: &AllGearClasses
+        - Amulets
+        - Belts
+        - Body Armour
+        - Boots
+        - Bows
+        - Claws
+        - Daggers
+        - Flask
+        - Gloves
+        - Helmets
+        - Jewel
+        - One Hand
+        - Quivers
+        - Rings
+        - Rune Dagger
+        - Sceptre
+        - Shields
+        - Staves
+        - Two Hand
+        - Wand
+        - Warstaves
+      Rarity: {'==': Rare}
+      AreaLevel: {'<=': 72}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.base_types, 15, vmax=20) }}
+    tags:
+      - gear
+      - base_types
+      - rares
+
+  # Base Types - Magic
+  - conditions:
+      Class: *AllGearClasses
+      Rarity: {'==': Magic}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.base_types, 10, vmax=20) }}
+    tags:
+      - gear
+      - base_types
+      - magic
+
+  # Base Types - Normal
+  - conditions:
+      Class: *AllGearClasses
+      Rarity: {'==': Normal}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.base_types, 5, vmax=20) }}
+    tags:
+      - gear
+      - base_types
+      - normal

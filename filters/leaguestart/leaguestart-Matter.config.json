@@ -1,0 +1,96 @@
+{
+    "thresholds": {
+        "artifacts": {},
+        "base_types": {},
+        "blighted_maps": {},
+        "cluster_jewels": {},
+        "currencies": {},
+        "delirium_orbs": {},
+        "divination_cards": {},
+        "essences": {},
+        "fossils": {},
+        "fragments": {},
+        "incubators": {},
+        "maps": {},
+        "oils": {},
+        "prophecies": {},
+        "scarabs": {},
+        "skill_gems": {},
+        "uniques": {},
+        "vials": {},
+        "watchstones": {}
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Matter_20"
+        },
+        "cluster_jewels": {
+            "name": "Matter_20"
+        },
+        "currencies": {
+            "name": "Matter_20"
+        },
+        "delirium_orbs": {
+            "name": "Matter_20"
+        },
+        "divination_cards": {
+            "name": "Matter_20"
+        },
+        "essences": {
+            "name": "Matter_20"
+        },
+        "flasks": {
+            "name": "Matter_20"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Matter_20"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "Matter_20",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Matter_20"
+        },
+        "oils": {
+            "name": "Matter_20"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "scarabs": {
+            "name": "Matter_20"
+        },
+        "skill_gems": {
+            "name": "Matter_20"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "Matter_20"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}

@@ -1,0 +1,96 @@
+{
+    "thresholds": {
+        "artifacts": {},
+        "base_types": {},
+        "blighted_maps": {},
+        "cluster_jewels": {},
+        "currencies": {},
+        "delirium_orbs": {},
+        "divination_cards": {},
+        "essences": {},
+        "fossils": {},
+        "fragments": {},
+        "incubators": {},
+        "maps": {},
+        "oils": {},
+        "prophecies": {},
+        "scarabs": {},
+        "skill_gems": {},
+        "uniques": {},
+        "vials": {},
+        "watchstones": {}
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Sunset_7"
+        },
+        "cluster_jewels": {
+            "name": "Sunset_7"
+        },
+        "currencies": {
+            "name": "Sunset_7"
+        },
+        "delirium_orbs": {
+            "name": "Sunset_7"
+        },
+        "divination_cards": {
+            "name": "Sunset_7"
+        },
+        "essences": {
+            "name": "Sunset_7"
+        },
+        "flasks": {
+            "name": "Sunset_7"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Sunset_7"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "Sunset_7",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Sunset_7"
+        },
+        "oils": {
+            "name": "Sunset_7"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "scarabs": {
+            "name": "Sunset_7"
+        },
+        "skill_gems": {
+            "name": "Sunset_7"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "Sunset_7"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}
