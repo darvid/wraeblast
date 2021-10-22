@@ -25,6 +25,16 @@
   filters</a> geared towards trade league players.
 </p>
 
+**3.16 Scourge League Update:** The trade filter is expected to be
+updated within the first few days of the upcoming league. **Wraeblast**
+relies heavily on economy data, and some of the cluster jewel filtering
+has to map passive descriptions to seemingly GGG internal, undocumented
+cluster jewel passive names. This work can only be done once the data is
+available either through data-mining or post-launch. Do note, however,
+that a **league start filter** is in the works with limited TTS, and
+obviously sans economy data. See the [3.16 Scourge League project board][18]
+to track progress.
+
 <!--ts-->
    * [Filter Generation](#filter-generation)
       * [Framework Features](#framework-features)
@@ -187,7 +197,7 @@ command line usage.
 
 ```shell
 ❯ wraeblast render_filter \
-    -l Expedition \
+    -l Scourge \
     -d output \
     -O filters/softcore.config.json \
     -o softcore.filter -i -vvv filters/softcore.yaml.j2
@@ -239,3 +249,4 @@ this project in the near future.
 [15]: https://docs.aws.amazon.com/polly/latest/dg/NTTS-main.html
 [16]: https://github.com/darvid/wraeblast/releases
 [17]: https://wraeblast.readthedocs.io/en/latest/
+[18]: https://github.com/darvid/wraeblast/projects/7

@@ -79,6 +79,10 @@ pyttsx3 = { version = "^2.90", optional = true }
 colormath = "^3.0.0"
 backoff = "^1.11.1"
 aiohttp = "^3.7.4"
+cachetools = "^4.2.2"
+inflection = "^0.5.1"
+tables = "^3.6.1"
+pandera = "^0.7.1"
 
 [tool.poetry.dev-dependencies]
 black = "^21.5b1"

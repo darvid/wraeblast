@@ -1,5 +1,5 @@
+*.h5
 *.md.toc.*
-.insights_cache/
 output/
 poetry.lock
 

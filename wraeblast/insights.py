@@ -2,23 +2,38 @@ import collections
 import collections.abc
 import datetime
 import enum
-import functools
 import os
-import typing
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    AsyncGenerator,
+    Optional,
+    Union,
+)
 
 import aiohttp
-import diskcache
+import inflection
 import numpy as np
 import pandas as pd
 import pydantic
 import structlog
 import uplink
+import uplink.converters
+from pandera.decorators import check_io, check_output
+from pandera.errors import SchemaError
+from pandera.model import SchemaModel
+from pandera.model_components import Field
+from pandera.typing import DataFrame, Object, Series, String
 
 from wraeblast import constants, errors
+from wraeblast.filtering.elements import ItemFilter
 from wraeblast.filtering.parsers.extended import env
 
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
+    import uplink.commands
+
     from wraeblast.filtering.parsers.extended import config
 
 
@@ -30,10 +45,10 @@ SingleInfluencedQcutItemsType = list[
     tuple[tuple[tuple[str, ...], pd.Interval], pd.DataFrame]
 ]
 InsightsResultType = tuple[
-    typing.Union["CurrencyType", "ItemType"],
-    "EconomyOverview",
+    Union["CurrencyType", "ItemType"],
+    pd.DataFrame,
 ]
-InsightsType = typing.Union["CurrencyType", "ItemType"]
+InsightsType = Union["CurrencyType", "ItemType"]
 
 quantiles = {
     "quartile": 4,
@@ -41,197 +56,41 @@ quantiles = {
     "decile": 10,
     "percentile": 100,
 }
+shard_names_to_orb_names = {
+    "Transmutation Shard": "Orb of Transmutation",
+    "Alteration Shard": "Orb of Alteration",
+    "Alchemy Shard": "Orb of Alteration",
+    "Annulment Shard": "Orb of Annulment",
+    "Binding Shard": "Orb of Binding",
+    "Horizon Shard": "Orb of Horizons",
+    "Harbinger's Shard": "Harbinger's Orb",
+    "Engineer's Shard": "Engineer's Orb",
+    "Ancient Shard": "Ancient Orb",
+    "Chaos Shard": "Chaos Orb",
+    "Mirror Shard": "Mirror of Kalandra",
+    "Exalted Shard": "Exalted Orb",
+    "Regal Shard": "Regal Orb",
+}
 
-_cache = diskcache.Cache(
-    directory=os.getenv("WRAEBLAST_CACHE_DIR", "./.insights_cache")
-)
-
-
-def to_camel(string: str) -> str:
-    first, *rest = string.split("_")
-    return first + "".join(word.capitalize() for word in rest)
-
-
-def raise_for_status(response):
-    """Checks whether or not the response was successful."""
-    if 200 <= response.status_code < 300:
-        return response
-
-    raise errors.UnsuccessfulInsightsRequest(
-        f"error {response.status_code}: {response.url}"
-    )
+_cache = pd.HDFStore(os.getenv("WRAEBLAST_CACHE", "./.wbinsights.h5"))
 
 
-def get_all_insights_types() -> list[InsightsType]:
-    return [*CurrencyType, *ItemType]
+class InflectedEnumMixin(enum.Enum):
+    @property
+    def underscored_value(self) -> str:
+        return inflection.underscore(self.value)
+
+    @property
+    def pluralized_underscored_value(self) -> str:
+        return inflection.pluralize(self.underscored_value)
 
 
-def get_insights_type_by_value(s: str) -> InsightsType:
-    for t in get_all_insights_types():
-        if t.value == s:
-            return t
-    raise KeyError(s)
-
-
-def get_quantile_tuple(q: str) -> tuple[str, int]:
-    if q.startswith("D"):
-        return ("decile", int(q[1:]))
-    elif q.startswith("P"):
-        return ("percentile", int(q[1:]))
-    elif q.startswith("QU"):
-        return ("quintile", int(q[2:]))
-    elif q.startswith("Q"):
-        return ("quartile", int(q[1:]))
-    else:
-        raise RuntimeError(f"invalid quantile: {q}")
-
-
-async def get_economy_overview(
-    league: str,
-    client: "PoENinja",
-    type_: InsightsType,
-) -> "EconomyOverview":
-    """Request an economy overview from poe.ninja."""
-    if type_ in CurrencyType:
-        meth = client.get_currency_overview
-    elif type_ in ItemType:
-        meth = client.get_item_overview
-    else:
-        raise RuntimeError()
-    logger.info(
-        "overview.get",
-        client=".".join([client.__module__, client.__class__.__name__]),
-        type=type_.value,
-    )
-    return await meth(league=league, type=type_.value)  # type: ignore
-
-
-async def get_overviews(
-    league: str,
-    types: list[InsightsType],
-) -> typing.AsyncGenerator[InsightsResultType, None]:
-    """Request all economy overviews from poe.ninja."""
-    logger.info("all_insights.get", league=league)
-    session = aiohttp.ClientSession()
-    client = uplink.AiohttpClient(session=session)
-    ninja = PoENinja(
-        base_url=PoENinja.default_base_url,
-        client=client,
-    )
-    for t in types:
-        overview = await get_economy_overview(
-            league=league,
-            client=ninja,
-            type_=t,
-        )
-        yield (t, overview)
-    await session.close()
-
-
-async def initialize_insights_cache(
-    league: str,
-    cache: typing.Optional[diskcache.Cache] = None,
-    cache_expire: int = 60 * 60 * 5,
-    no_sync: bool = False,
-) -> diskcache.Cache:
-    """Fetch and cache economy insights as needed."""
-    if cache is None:
-        cache = _cache
-    # log = logger.bind(league=league, cache_dir=cache.directory)
-    log = logger.bind(league=league)
-    log.info("cache.initialize", league=league, dir=cache.directory)
-    missing_overviews = []
-    for t in get_all_insights_types():
-        overview = cache.get(f"insights:{t.value}")
-        if overview is None:
-            log.debug("cache.miss", type=t.value)
-            missing_overviews.append(t)
-        else:
-            log.debug("cache.hit", type=t.value)
-    if missing_overviews and no_sync:
-        raise errors.WraeblastError("insights cache is incomplete")
-    async for t, overview in get_overviews(
-        league=league,
-        types=missing_overviews,
-    ):
-        log.info(
-            "overview.response",
-            lines=len(overview.lines),
-            type=t.value,
-        )
-        cache.add(
-            key=f"insights:{t.value}",
-            value=overview.dict(by_alias=True),
-            expire=cache_expire,
-        )
-    return cache
-
-
-async def initialize_filter_context(
-    initialize_cache: bool = True,
-    league: typing.Optional[str] = None,
-    cache: typing.Optional[diskcache.Cache] = None,
-    cache_expire: int = 60 * 60 * 5,
-    no_sync: bool = False,
-) -> "ItemFilterContext":
-    """Create an ``ItemFilterContext`` from cached economy data."""
-    if initialize_cache:
-        if league is None:
-            raise RuntimeError("league must be provided if initializing cache")
-        cache = await initialize_insights_cache(
-            league=league,
-            cache=cache,
-            cache_expire=cache_expire,
-            no_sync=no_sync,
-        )
-    elif cache is None:
-        cache = _cache
-    else:
-        raise RuntimeError("cache not provided")
-    ctx = {}
-    for t in get_all_insights_types():
-        overview = cache.get(f"insights:{t.value}")
-        ctx[ItemFilterContext.ctx_name_for_insights_type(t)] = overview
-    return ItemFilterContext(**ctx)
-
-
-def discretize(
-    models: list[pydantic.BaseModel],
-    key: typing.Callable[[pydantic.BaseModel], float],
-    bins: list[float],
-    ignore_out_of_bounds: bool = True,
-) -> dict[float, list[pydantic.BaseModel]]:
-    arr = np.asarray([key(m) for m in models])
-    d = collections.defaultdict(list)
-    for i, bin_i in enumerate(np.digitize(arr, bins)):
-        try:
-            d[bins[bin_i]].append(models[i])
-        except IndexError:
-            if not ignore_out_of_bounds:
-                raise
-            d[bins[-1]].append(models[i])
-    return d
-
-
-@uplink.retry(
-    when=uplink.retry.when.status(503) | uplink.retry.when.raises(Exception),
-    stop=uplink.retry.stop.after_attempt(5)
-    | uplink.retry.stop.after_delay(10),
-    backoff=uplink.retry.backoff.jittered(multiplier=0.5),
-)
-@uplink.returns.json
-@uplink.json
-@uplink.get
-def get_json():
-    """Template for GET requests with JSON as both request and response."""
-
-
-class CurrencyType(enum.Enum):
+class CurrencyType(InflectedEnumMixin, enum.Enum):
     CURRENCY = "Currency"
     FRAGMENT = "Fragment"
 
 
-class ItemType(enum.Enum):
+class ItemType(InflectedEnumMixin, enum.Enum):
     ARTIFACT = "Artifact"
     BASE_TYPE = "BaseType"
     BEAST = "Beast"
@@ -259,53 +118,166 @@ class ItemType(enum.Enum):
     VIAL = "Vial"
     WATCHSTONE = "Watchstone"
 
-
-class BidAsk(pydantic.BaseModel):
-    id: int
-    league_id: int
-    pay_currency_id: int
-    get_currency_id: int
-    sample_time_utc: datetime.datetime
-    count: int
-    value: float
-    data_point_count: int
-    includes_secondary: int
-    listing_count: int
-
-
-class Modifier(pydantic.BaseModel):
-    text: str
-    optional: bool
-
-
-class BaseLine(pydantic.BaseModel):
-    chaos_value: float = 0
-
-
-class CurrencyLine(BaseLine):
-    currency_type_name: str
-    chaos_equivalent: float
-    details_id: str
-    # chaos_value: float = 0
-    pay: typing.Optional[BidAsk]
-    receive: typing.Optional[BidAsk]
-
-    @pydantic.root_validator
-    def set_chaos_value(cls, values) -> None:
-        values["chaos_value"] = values["chaos_equivalent"]
-        return values
-
     @property
-    def name(self) -> str:
-        return self.currency_type_name
+    def key_name(self) -> str:
+        return inflection.pluralize(inflection.underscore(self.value))
 
-    class Config:
-        alias_generator = to_camel
+
+@uplink.response_handler
+def raise_for_status(response):
+    """Checks whether or not the response was successful."""
+    if 200 <= response.status_code < 300:
+        return response
+
+    raise errors.UnsuccessfulInsightsRequest(
+        f"error {response.status_code}: {response.url}"
+    )
+
+
+def get_all_insights_types() -> list[InsightsType]:
+    return [*CurrencyType, *ItemType]
+
+
+def get_display_value(
+    chaos_value: float,
+    exalted_exchange_value: int,
+    round_down_by: int = 1,
+    precision: int = 0,
+) -> str:
+    if chaos_value < exalted_exchange_value:
+        if round_down_by:
+            chaos_value = env.round_down(chaos_value, round_down_by)
+        return f"{chaos_value}c"
+    else:
+        return f"{chaos_value / exalted_exchange_value:.{precision}f}ex"
+
+
+def get_insights_type_by_value(s: str) -> InsightsType:
+    for t in get_all_insights_types():
+        if t.value == s:
+            return t
+    raise KeyError(s)
+
+
+def get_quantile_tuple(q: str) -> tuple[str, int]:
+    if q.startswith("D"):
+        return ("decile", int(q[1:]))
+    elif q.startswith("P"):
+        return ("percentile", int(q[1:]))
+    elif q.startswith("QU"):
+        return ("quintile", int(q[2:]))
+    elif q.startswith("Q"):
+        return ("quartile", int(q[1:]))
+    else:
+        raise RuntimeError(f"invalid quantile: {q}")
+
+
+async def get_economy_overview(
+    league: str,
+    client: "NinjaConsumer",
+    type_: InsightsType,
+) -> pd.DataFrame:
+    """Request an economy overview from poe.ninja."""
+    if type_ in CurrencyType:
+        meth = client.get_currency_overview
+    elif type_ in ItemType:
+        meth = client.get_item_overview
+    else:
+        raise RuntimeError()
+    logger.info(
+        "overview.get",
+        client=".".join([client.__module__, client.__class__.__name__]),
+        type=type_.value,
+    )
+    return await meth(league=league, type=type_.value)  # type: ignore
+
+
+async def get_dataframes(
+    league: str,
+    types: list[InsightsType],
+) -> AsyncGenerator[InsightsResultType, None]:
+    """Request all economy overviews from poe.ninja."""
+    logger.info("all_insights.get", league=league)
+    session = aiohttp.ClientSession()
+    client = uplink.AiohttpClient(session=session)
+    ninja = NinjaConsumer(
+        base_url=NinjaConsumer.default_base_url,
+        client=client,
+    )
+    for t in types:
+        overview = await get_economy_overview(
+            league=league,
+            client=ninja,
+            type_=t,
+        )
+        yield (t, overview)
+    await session.close()
+
+
+async def initialize_insights_cache(
+    league: str,
+    cache: Optional[pd.HDFStore] = None,
+    no_sync: bool = False,
+) -> pd.HDFStore:
+    """Fetch and cache economy insights as needed."""
+    if cache is None:
+        cache = _cache
+    # log = logger.bind(league=league, cache_dir=cache.directory)
+    log = logger.bind(league=league)
+    log.info("cache.initialize", league=league)
+    missing_dataframes = []
+    for t in get_all_insights_types():
+        try:
+            df = cache.get(f"i_{t.value}")
+            log.debug("cache.hit", type=t.value)
+        except KeyError:
+            log.debug("cache.miss", type=t.value)
+            missing_dataframes.append(t)
+    if missing_dataframes and no_sync:
+        raise errors.WraeblastError("insights cache is incomplete")
+    async for t, df in get_dataframes(
+        league=league,
+        types=missing_dataframes,
+    ):
+        log.info(
+            "overview.response",
+            lines=df.shape[0],
+            type=t.value,
+        )
+        # breakpoint()
+        cache.put(f"i_{t.value}", df, format="table")
+    return cache
+
+
+async def initialize_filter_context(
+    initialize_cache: bool = True,
+    league: Optional[str] = None,
+    cache: Optional[pd.HDFStore] = None,
+    no_sync: bool = False,
+) -> "ItemFilterContext":
+    """Create an ``ItemFilterContext`` from cached economy data."""
+    if initialize_cache:
+        if league is None:
+            raise RuntimeError("league must be provided if initializing cache")
+        cache = await initialize_insights_cache(
+            league=league,
+            cache=cache,
+            no_sync=no_sync,
+        )
+    elif cache is None:
+        cache = _cache
+    else:
+        raise RuntimeError("cache not provided")
+    economy_data = {}
+    for t in get_all_insights_types():
+        overview = cache.get(f"i_{t.value}")
+        economy_data[t.pluralized_underscored_value] = overview
+    return ItemFilterContext(data=economy_data)
 
 
 def _parse_name_and_details_id(
     name: str, details_id: str
-) -> tuple[typing.Optional[int], tuple[constants.Influence, ...]]:
+) -> tuple[Optional[int], tuple[constants.Influence, ...]]:
     tokens = details_id.split("-")
     ilvl_and_influences = tokens[name.count(" ") + name.count("-") + 1 :]
     try:
@@ -320,108 +292,178 @@ def _parse_name_and_details_id(
         return (None, tuple())
 
 
-class TradeInfo(pydantic.BaseModel):
-    mod: str
-    min: int
-    max: int
-
-
-class ItemLine(BaseLine):
-    id: str
-    name: str
-    item_class: int
-    implicit_modifiers: list[Modifier]
-    explicit_modifiers: list[Modifier]
-    exalted_value: float
-    count: int
-    details_id: str
-
-    base_type: typing.Optional[str]
-    flavour_text: typing.Optional[str]
-    gem_quality: typing.Optional[int]
-    gem_level: typing.Optional[int]
-    icon: typing.Optional[str]
-    influences: typing.Optional[tuple[constants.Influence, ...]]
-    item_level: typing.Optional[int]
-    level_required: typing.Optional[int]
-    links: typing.Optional[int]
-    listing_count: typing.Optional[int]
-    map_tier: typing.Optional[int]
-    stack_size: typing.Optional[int]
-    trade_info: typing.Optional[list[TradeInfo]] = pydantic.Field(
-        default_factory=list
+def get_quantile_thresholds(df: pd.DataFrame) -> list[dict[str, float]]:
+    groups = df.groupby(list(quantiles.keys()), as_index=False)
+    return groups.agg({"chaos_value": "min"}).to_dict(  # type: ignore
+        "records"
     )
-    variant: typing.Optional[str]
+
+
+class NinjaCurrencyOverviewSchema(SchemaModel):
+    currency_type_name: Series[String]
+    chaos_equivalent: Series[float]
+    details_id: Series[String]
+    pay_id: Series[float] = Field(alias="pay.id", nullable=True)
+    pay_league_id: Series[float] = Field(alias="pay.league_id", nullable=True)
+    pay_pay_currency_id: Series[float] = Field(
+        alias="pay.pay_currency_id", nullable=True
+    )
+    pay_get_currency_id: Series[float] = Field(
+        alias="pay.get_currency_id", nullable=True
+    )
+    pay_sample_time_utc: Series[
+        Annotated[pd.DatetimeTZDtype, "ns", "utc"]
+    ] = Field(alias="pay.sample_time_utc", coerce=True, nullable=True)
+    pay_count: Series[float] = Field(alias="pay.count", nullable=True)
+    pay_value: Series[float] = Field(alias="pay.value", nullable=True)
+    pay_data_point_count: Series[float] = Field(
+        alias="pay.data_point_count", ge=0, coerce=True, nullable=True
+    )
+    pay_includes_secondary: Series[bool] = Field(
+        alias="pay.includes_secondary", coerce=True, nullable=True
+    )
+    pay_listing_count: Series[float] = Field(
+        alias="pay.listing_count", coerce=True, nullable=True
+    )
+    receive_id: Series[int] = Field(alias="receive.id")
+    receive_league_id: Series[int] = Field(alias="receive.league_id")
+    receive_pay_currency_id: Series[int] = Field(
+        alias="receive.pay_currency_id",
+    )
+    receive_get_currency_id: Series[int] = Field(
+        alias="receive.get_currency_id",
+    )
+    receive_sample_time_utc: Series[
+        Annotated[pd.DatetimeTZDtype, "ns", "utc"]
+    ] = Field(alias="receive.sample_time_utc", coerce=True)
+    receive_count: Series[int] = Field(alias="receive.count")
+    receive_value: Series[float] = Field(alias="receive.value")
+    receive_data_point_count: Series[int] = Field(
+        alias="receive.data_point_count",
+    )
+    pay_spark_line_data: Series[Object] = Field(
+        alias="pay_spark_line.data",
+    )
+    pay_spark_line_total_change: Series[float] = Field(
+        alias="pay_spark_line.total_change",
+    )
+    low_confidence_pay_spark_line_data: Series[Object] = Field(
+        alias="low_confidence_pay_spark_line.data",
+    )
+    low_confidence_pay_spark_line_total_change: Series[float] = Field(
+        alias="low_confidence_pay_spark_line.total_change",
+    )
+    low_confidence_receive_spark_line_data: Series[Object] = Field(
+        alias="low_confidence_receive_spark_line.data",
+    )
+    low_confidence_receive_spark_line_total_change: Series[float] = Field(
+        alias="low_confidence_receive_spark_line.total_change",
+    )
+
+
+class NinjaItemOverviewSchema(SchemaModel):
+    id: Series[int]
+    name: Series[String]
+    item_class: Series[int]
+    flavour_text: Optional[Series[String]]
+    chaos_value: Series[float]
+    exalted_value: Series[float]
+    count: Series[int]
+    details_id: Series[String]
+    # listing_count: Series[int]
+    icon: Optional[Series[String]] = Field(nullable=True)
+    base_type: Optional[Series[String]] = Field(nullable=True)
+    gem_level: Optional[Series[float]] = Field(nullable=True)
+    gem_quality: Optional[Series[float]] = Field(nullable=True)
+    item_level: Optional[Series[float]] = Field(nullable=True)
+    level_required: Optional[Series[float]] = Field(nullable=True)
+    links: Optional[Series[float]] = Field(nullable=True)
+    map_tier: Optional[Series[float]] = Field(nullable=True)
+    stack_size: Optional[Series[float]] = Field(nullable=True)
+    variant: Optional[Series[String]] = Field(nullable=True)
 
     class Config:
-        alias_generator = to_camel
-        use_enum_values = True
+        coerce = True
 
-    def __init__(self, **data) -> None:
-        super().__init__(**data)
-        if self.item_class == 2:
-            self.item_level, self.influences = _parse_name_and_details_id(
-                self.name, self.details_id
-            )
 
-    @property
-    def cluster_jewel_enchantment(self) -> str:
+class ExtendedNinjaOverviewSchema(SchemaModel):
+    item_name: Series[String]
+    chaos_value: Series[float]
+    alt_quality: Series[String]
+    is_alt_quality: Series[bool]
+    chaos_value: Series[float]
+    chaos_value_log: Series[float]
+    quartile: Series[int]
+    quintile: Series[int]
+    decile: Series[int]
+    percentile: Series[int]
+    base_type: Optional[Series[String]] = Field(nullable=True)
+    gem_level: Optional[Series[float]] = Field(nullable=True)
+    gem_quality: Optional[Series[float]] = Field(nullable=True)
+    influences: Optional[Series[String]] = Field(nullable=True)
+    level_required: Optional[Series[float]] = Field(nullable=True)
+    links: Optional[Series[float]] = Field(nullable=True)
+    map_tier: Optional[Series[float]] = Field(nullable=True)
+    num_influences: Optional[Series[int]] = Field(nullable=True)
+    orb_name: Optional[Series[String]] = Field(nullable=True)
+    stack_size: Optional[Series[float]] = Field(nullable=True)
+    variant: Optional[Series[String]] = Field(nullable=True)
+
+
+class PostProcessedNinjaOverviewSchema(ExtendedNinjaOverviewSchema):
+    exalted_value: Series[float]
+    display_value: Series[String]
+
+
+@check_output(ExtendedNinjaOverviewSchema)
+def transform_ninja_df(df: pd.DataFrame) -> pd.DataFrame:
+    currency_overview_schema = NinjaCurrencyOverviewSchema.to_schema()
+    item_overview_schema = NinjaItemOverviewSchema.to_schema()
+    is_currency_overview = False
+
+    try:
+        df = currency_overview_schema.validate(df)
+        is_currency_overview = True
+    except SchemaError:
+        df = item_overview_schema.validate(df)
+
+    if is_currency_overview:
         try:
-            return constants.cluster_jewel_names_to_passives[self.name].value
-        except KeyError:
-            return ""
+            shards = []
+            for shard_name, orb_name in shard_names_to_orb_names.items():
+                if not df[df["currency_type_name"] == shard_name].empty:
+                    continue
+                orb_value = (
+                    df[df["currency_type_name"] == orb_name][
+                        "chaos_equivalent"
+                    ].iloc[0]
+                    if orb_name != "Chaos Orb"
+                    else 1
+                )
+                shards.append(
+                    {
+                        "currency_type_name": shard_name,
+                        "chaos_equivalent": orb_value / 20,
+                    }
+                )
+            df = df.append(
+                shards,
+                verify_integrity=True,
+                sort=True,
+                ignore_index=True,
+            )
+        except IndexError:
+            pass
 
-    @property
-    def cluster_jewel_passives(self) -> int:
-        if self.trade_info:
-            for ti in self.trade_info:
-                if ti.mod == "enchant.stat_3086156145":
-                    return ti.min
-        return 0
-
-    @property
-    def alt_quality(self) -> typing.Optional[str]:
-        for alt_quality in constants.AltQuality:
-            if self.name.startswith(alt_quality.value):
-                return alt_quality.value
-        return None
-
-    @property
-    def is_alt_quality_skill_gem(self) -> bool:
-        return self.skill_gem_name != self.name
-
-    @property
-    def skill_gem_name(self) -> str:
-        for alt_quality in constants.AltQuality:
-            if self.name.startswith(alt_quality.value):
-                return self.name[len(alt_quality.value) + 1 :]
-        return self.name
-
-
-class CurrencyDetail(pydantic.BaseModel):
-    id: int
-    icon: str
-    name: str
-    trade_id: typing.Optional[str] = None
-
-    class Config:
-        alias_generator = to_camel
-
-
-def build_economy_overview_dataframe(
-    *args,
-    chaos_value_bins: int = 10,
-    chaos_value_labels: typing.Optional[typing.Union[list[str], bool]] = None,
-) -> pd.DataFrame:
-    df = pd.DataFrame(*args)
-    # if "variant" in df:
-    #     df.drop(
-    #         index=df[df.variant.isin(("Pre 2.0", "Pre 2.4"))].index,  # type: ignore
-    #         inplace=True,
-    #     )
-    for name_key in ("currency_type_name", "skill_gem_name"):
-        if name_key in df.columns:
-            df["name"] = df[name_key]
+    output = pd.DataFrame()
+    output["item_name"] = (
+        df["currency_type_name"]
+        if "currency_type_name" in df.columns
+        else df["name"]
+    )
+    for label in ("currency_type_name", "skill_gem_name"):
+        if label in df.columns:
+            output["item_name"] = df[label]
 
     if (
         "base_type" in df.columns
@@ -430,362 +472,247 @@ def build_economy_overview_dataframe(
         ].empty
     ):
         try:
-            df["cluster_jewel_enchantment"] = df.name.map(
+            output["cluster_jewel_enchantment"] = df["name"].map(
                 lambda name: constants.get_cluster_jewel_passive(name).value
             )
-            df["cluster_jewel_passives_min"] = df.trade_info.apply(
+            output["cluster_jewel_passives_min"] = df["trade_info"].apply(
                 lambda trade_info: [
                     ti
                     for ti in trade_info
                     if ti["mod"] == "enchant.stat_3086156145"
                 ][0]["min"]
             )
-            df["cluster_jewel_passives_max"] = df.trade_info.apply(
+            output["cluster_jewel_passives_max"] = df["trade_info"].apply(
                 lambda trade_info: [
                     ti
                     for ti in trade_info
                     if ti["mod"] == "enchant.stat_3086156145"
                 ][0]["max"]
             )
-            df["cluster_jewel_passives"] = df["cluster_jewel_passives_min"]
-        except (KeyError, IndexError):
+            output["cluster_jewel_passives"] = output[
+                "cluster_jewel_passives_min"
+            ]
+        except (KeyError, IndexError) as e:
             # TODO: Find a way to filter out unique cluster jewels better
             pass
 
-    # Allow dot-notation access to item names, since name is reserved
-    df["item_name"] = df["name"]
-
-    df["alt_quality"] = ""
-    df["is_alt_quality"] = False
+    output["alt_quality"] = ""
+    output["is_alt_quality"] = False
     alt_filter = (
-        df["item_name"].str.startswith("Anomalous")
-        | df["item_name"].str.startswith("Divergent")
-        | df["item_name"].str.startswith("Phantasmal")
+        output["item_name"].str.startswith("Anomalous")
+        | output["item_name"].str.startswith("Divergent")
+        | output["item_name"].str.startswith("Phantasmal")
     )
-    if not df[alt_filter].empty:
-        df.loc[alt_filter, "is_alt_quality"] = True
-        df.loc[alt_filter, "alt_quality"] = df["item_name"].apply(
+    if not output[alt_filter].empty:
+        output.loc[alt_filter, "is_alt_quality"] = True
+        output.loc[alt_filter, "alt_quality"] = output["item_name"].apply(
             lambda s: s[: s.find(" ")],
         )
-        df.loc[alt_filter, "item_name"] = df["item_name"].apply(
+        output.loc[alt_filter, "item_name"] = output["item_name"].apply(
             lambda s: s[s.find(" ") + 1 :],
         )
 
+    if "name" in df.columns and "details_id" in df.columns:
+        output["influences"] = df.apply(
+            lambda r: "/".join(
+                i.value
+                for i in _parse_name_and_details_id(
+                    str(r["name"]),
+                    str(r["details_id"]),
+                )[1]
+            ),
+            axis=1,
+        )
+        output["num_influences"] = (
+            df["variant"].str.count("/").fillna(0).astype(int)
+            if "variant" in df.columns
+            else 0
+        )
+
+    for column in (
+        "base_type",
+        "level_required",
+        "links",
+        "gem_level",
+        "gem_quality",
+        "map_tier",
+        "stack_size",
+    ):
+        if column in df.columns:
+            output[column] = df[column]
+            if column == "links":
+                output[column] = output[column].fillna(0)
+
+    output["chaos_value"] = (
+        df["chaos_equivalent"]
+        if "chaos_equivalent" in df.columns
+        else df["chaos_value"]
+    )
     # Normalized chaos values
     # XXX: since log(0) is -inf, the min chaos value of the dataframe replaces
     # rows with a chaos value of 0
-    min_chaos_value = df.loc[df["chaos_value"] != 0, "chaos_value"].min()
-    df["chaos_value"].replace(0, min_chaos_value, inplace=True)  # type: ignore
-    df["chaos_value_norm"] = np.log(df["chaos_value"])
-    # min_norm = df.loc[
-    #     df["chaos_value_norm"] != -np.inf, "chaos_value_norm"
-    # ].min()
-    # df["chaos_value_norm"].replace(
-    #     -np.inf,
-    #     min_norm,  # type: ignore
-    #     inplace=True,
-    # )
-    # XXX: massage incorrect/out-of-date poe.ninja data to avoid skewing
-    # ...but keep the original dataframe intact for posterity
-
-    # Custom quantiles
-    df["value_bin"] = pd.cut(
-        df["chaos_value_norm"],
-        bins=chaos_value_bins,
-        duplicates="drop",
-        labels=chaos_value_labels,
-    )
-    df["value_quantile"] = pd.qcut(
-        df["chaos_value"],
-        q=chaos_value_bins,
-        duplicates="drop",
-        labels=chaos_value_labels,
-    )
+    min_chaos_value = output.loc[
+        output["chaos_value"] != 0, "chaos_value"
+    ].min()
+    output["chaos_value"].replace(0, min_chaos_value, inplace=True)  # type: ignore
+    output["chaos_value_log"] = np.log(output["chaos_value"])
 
     # Pre-defined quantiles (quartiles, quintiles, percentiles)
-    for key, q in quantiles.items():
+    for label, q in quantiles.items():
         labels = None
         if isinstance(q, (list, tuple)):
             q, labels = q
-        df[key] = pd.qcut(
-            df["chaos_value"].rank(method="first", numeric_only=True),
+        output[label] = pd.qcut(
+            output["chaos_value"].rank(method="first", numeric_only=True),
             q=q,
             labels=False if labels is None else None,
             precision=0,
             duplicates="drop",
         )
         if labels is not None:
-            df[key] = df[key].map(dict(enumerate(labels)))
+            output[label] = output[label].map(dict(enumerate(labels)))
+    return output
+
+
+def json_normalize(data: dict[Any, Any]) -> pd.DataFrame:
+    df = pd.json_normalize(data)
+    df.columns = [inflection.underscore(c) for c in df.columns]
     return df
 
 
-class PriceSnapshot(pydantic.BaseModel):
-    count: int
-    value: float
-    days_ago: int
-
-    class Config:
-        alias_generator = to_camel
-
-
-class CurrencyHistory(pydantic.BaseModel):
-    pay_currency_graph_data: list[PriceSnapshot]
-    receive_currency_graph_data: list[PriceSnapshot]
-
-    class Config:
-        alias_generator = to_camel
-
-
-class EconomyOverview(pydantic.BaseModel, collections.abc.Iterator):
-    lines: typing.List[BaseLine]
-    chaos_value_bins: int = 10
-    chaos_value_labels: typing.Optional[typing.Union[list[str], bool]]
-    _dataframe: pd.DataFrame = pydantic.PrivateAttr()
-    _dataframe_rows_it: typing.Iterator[
-        tuple[typing.Any, ...]
-    ] = pydantic.PrivateAttr()
-    _quantile_thresholds: list[dict[str, float]] = pydantic.PrivateAttr(
-        default_factory=list
-    )
-
-    class Config:
-        alias_generator = to_camel
-
-    @property
-    def df(self) -> pd.DataFrame:
-        return self._dataframe
-
-    @pydantic.root_validator
-    def set_chaos_value_labels(
-        cls, values: dict[str, typing.Any]
-    ) -> dict[str, typing.Any]:
-        labels = values["chaos_value_labels"]
-        bins = values["chaos_value_bins"]
-        if isinstance(labels, list) and len(labels) == 0:
-            values["chaos_value_labels"] = None
-        return values
-
-    def __init__(self, **data) -> None:
-        super().__init__(**data)
-        self._dataframe = build_economy_overview_dataframe(
-            [line.dict() for line in self.lines],
-            chaos_value_bins=self.chaos_value_bins,
-            chaos_value_labels=self.chaos_value_labels,
+@uplink.install
+class NinjaDataFrameFactory(uplink.converters.Factory):
+    def create_response_body_converter(self, cls, request_definition):
+        return lambda response: transform_ninja_df(
+            df=json_normalize(response.json()["lines"]),
         )
-        self._dataframe_rows_it = self._dataframe.iterrows().__iter__()
-
-    def max_chaos_value(self) -> float:
-        return self._dataframe.value_quantile.max().right
-
-    def get_quantiles_for_threshold(
-        self, min_chaos_value: float
-    ) -> typing.Optional[dict[str, float]]:
-        for threshold in self.quantile_thresholds():
-            if threshold["chaos_value"] >= min_chaos_value:
-                return threshold
-        return self.quantile_thresholds()[-1]
-
-    def quantile_thresholds(self) -> list[dict[str, float]]:
-        if self._quantile_thresholds:
-            return self._quantile_thresholds
-        groups = self.df.groupby(list(quantiles.keys()), as_index=False)
-        self._quantile_thresholds = groups.agg(  # type: ignore
-            {"chaos_value": "min"}
-        ).to_dict("records")
-        return self._quantile_thresholds
-
-    def __iter__(self):
-        return self._dataframe_rows_it
-
-    def __next__(self):
-        return self._dataframe_rows_it.__next__()
 
 
-class CurrencyOverview(EconomyOverview):
-    lines: typing.List[CurrencyLine]
-    currency_details: typing.List[CurrencyDetail]
-
-    def __init__(self, **data) -> None:
-        super().__init__(**data)
-        self.lines.sort(key=lambda line: line.chaos_value, reverse=True)
-
-    def details_by_id(self) -> dict[int, CurrencyDetail]:
-        return {cd.id: cd for cd in self.currency_details}
-
-    def dict_by_name(self) -> dict[str, typing.Any]:
-        return {line.currency_type_name: line for line in self.lines}
-
-    def get_human_readable_value(
-        self,
-        chaos_value: float,
-        round_down_by: int = 1,
-        precision: int = 0,
-    ) -> str:
-        ex_price = self.exalted_price()
-        if chaos_value < ex_price:
-            if round_down_by:
-                chaos_value = env.round_down(chaos_value, round_down_by)
-            return f"{chaos_value}c"
-        else:
-            return f"{chaos_value / ex_price:.{precision}f}ex"
-
-    def get_orb_for_shard_name(self, shard_name: str) -> pd.Series:
-        shard_names_to_orb_names = {
-            "Transmutation Shard": "Orb of Transmutation",
-            "Alteration Shard": "Orb of Alteration",
-            "Alchemy Shard": "Orb of Alteration",
-            "Annulment Shard": "Orb of Annulment",
-            "Binding Shard": "Orb of Binding",
-            "Horizon Shard": "Orb of Horizons",
-            "Harbinger's Shard": "Harbinger's Orb",
-            "Engineer's Shard": "Engineer's Orb",
-            "Ancient Shard": "Ancient Orb",
-            "Chaos Shard": "Chaos Orb",
-            "Mirror Shard": "Mirror of Kalandra",
-            "Exalted Shard": "Exalted Orb",
-            "Regal Shard": "Regal Orb",
-        }
-        orb_name = shard_names_to_orb_names[shard_name]
-        return self.df[self.df.item_name == orb_name].iloc[0]  # type: ignore
-
-    def exalted_price(self) -> float:
-        for line in self.lines:
-            if line.name == "Exalted Orb":
-                return line.chaos_value
-        return -1
-
-    def __getitem__(self, key) -> CurrencyLine:
-        for line in self.lines:
-            if line.name == key:
-                return line
-        raise KeyError(key)
+uplink_retry = uplink.retry(
+    when=uplink.retry.when.status(503) | uplink.retry.when.raises(Exception),
+    stop=uplink.retry.stop.after_attempt(5)
+    | uplink.retry.stop.after_delay(10),
+    backoff=uplink.retry.backoff.jittered(multiplier=0.5),
+)
 
 
-class ItemOverview(EconomyOverview):
-    lines: typing.List[ItemLine]
-
-    def __init__(self, **data) -> None:
-        super().__init__(**data)
-        self.lines.sort(key=lambda line: line.chaos_value, reverse=True)
-
-    def dict_by_name(self) -> dict[str, typing.Any]:
-        return {line.name: line for line in self.lines}
+@raise_for_status
+@uplink_retry
+@uplink.returns.json
+@uplink.json
+@uplink.get
+def get_json() -> uplink.commands.RequestDefinitionBuilder:
+    """Template for GET requests with JSON as both request and response."""
 
 
-class ItemFilterContext(pydantic.BaseModel):
-    """Entrypoint for accessing economy data from poe.ninja."""
-
-    artifacts: ItemOverview
-    base_types: ItemOverview
-    beasts: ItemOverview
-    blighted_maps: ItemOverview
-    cluster_jewels: ItemOverview
-    currency: CurrencyOverview
-    delirium_orbs: ItemOverview
-    divination_cards: ItemOverview
-    essences: ItemOverview
-    fossils: ItemOverview
-    fragments: CurrencyOverview
-    helmet_enchants: ItemOverview
-    incubators: ItemOverview
-    invitations: ItemOverview
-    maps: ItemOverview
-    oils: ItemOverview
-    prophecies: ItemOverview
-    resonators: ItemOverview
-    scarabs: ItemOverview
-    skill_gems: ItemOverview
-    unique_accessories: ItemOverview
-    unique_armours: ItemOverview
-    unique_flasks: ItemOverview
-    unique_jewels: ItemOverview
-    unique_maps: ItemOverview
-    unique_weapons: ItemOverview
-    vials: ItemOverview
-    watchstones: ItemOverview
-
-    @classmethod
-    def ctx_name_for_insights_type(cls, insights_type: InsightsType) -> str:
-        return {
-            CurrencyType.CURRENCY: "currency",
-            CurrencyType.FRAGMENT: "fragments",
-            ItemType.ARTIFACT: "artifacts",
-            ItemType.BASE_TYPE: "base_types",
-            ItemType.BEAST: "beasts",
-            ItemType.BLIGHTED_MAP: "blighted_maps",
-            ItemType.CLUSTER_JEWEL: "cluster_jewels",
-            ItemType.DELIRIUM_ORB: "delirium_orbs",
-            ItemType.DIVINATION_CARD: "divination_cards",
-            ItemType.ESSENCE: "essences",
-            ItemType.FOSSIL: "fossils",
-            ItemType.HELMET_ENCHANT: "helmet_enchants",
-            ItemType.INCUBATOR: "incubators",
-            ItemType.INVITATION: "invitations",
-            ItemType.MAP: "maps",
-            ItemType.OIL: "oils",
-            ItemType.PROPHECY: "prophecies",
-            ItemType.RESONATOR: "resonators",
-            ItemType.SCARAB: "scarabs",
-            ItemType.SKILL_GEM: "skill_gems",
-            ItemType.UNIQUE_ACCESSORY: "unique_accessories",
-            ItemType.UNIQUE_ARMOUR: "unique_armours",
-            ItemType.UNIQUE_FLASK: "unique_flasks",
-            ItemType.UNIQUE_JEWEL: "unique_jewels",
-            ItemType.UNIQUE_MAP: "unique_maps",
-            ItemType.UNIQUE_WEAPON: "unique_weapons",
-            ItemType.VIAL: "vials",
-            ItemType.WATCHSTONE: "watchstones",
-        }[insights_type]
-
-    def dict_by_name(self) -> dict[str, dict[str, typing.Any]]:
-        d = {}
-        for key, overview in self.__dict__.items():
-            if key.startswith("_"):
-                continue
-            if isinstance(overview, (CurrencyOverview, ItemOverview)):
-                d[key] = overview.dict_by_name()
-        return d
+@raise_for_status
+@uplink_retry
+@uplink.get
+def get_dataframe() -> uplink.commands.RequestDefinitionBuilder:
+    ...
 
 
-class PoEOfficial(uplink.Consumer):
-    default_base_url = "https://api.pathofexile.com/"
-
-    @uplink.response_handler(raise_for_status)
-    @get_json("league")  # type: ignore
-    def get_leagues(self):
-        """List leagues."""
-
-
-class PoENinja(uplink.Consumer):
+class NinjaConsumer(uplink.Consumer):
     default_base_url = "https://poe.ninja/api/data/"
 
-    @uplink.response_handler(raise_for_status)
     @uplink.ratelimit(calls=2, period=150)
-    @get_json("CurrencyOverview")  # type: ignore
+    @get_dataframe("CurrencyOverview")  # type: ignore
     def get_currency_overview(
         self,
         league: uplink.Query(type=str),  # type: ignore
         type: uplink.Query(type=CurrencyType),  # type: ignore
-    ) -> CurrencyOverview:
+    ) -> pd.DataFrame:
         ...
 
-    # @uplink.response_handler(raise_for_status)
-    # @uplink.ratelimit(calls=2, period=150)
-    @get_json("CurrencyHistory")  # type: ignore
+    @uplink.ratelimit(calls=2, period=150)
+    @get_dataframe("CurrencyHistory")  # type: ignore
     def get_currency_history(
         self,
         league: uplink.Query(type=str),  # type: ignore
         type: uplink.Query(type=CurrencyType),  # type: ignore
         currency_id: uplink.Query("currencyId", type=int),  # type: ignore
-    ) -> CurrencyHistory:
+    ) -> pd.DataFrame:
         ...
 
-    @uplink.response_handler(raise_for_status)
     @uplink.ratelimit(calls=30, period=150)
-    @get_json("ItemOverview")  # type: ignore
+    @get_dataframe("ItemOverview")  # type: ignore
     def get_item_overview(
         self,
         league: uplink.Query(type=str),  # type: ignore
         type: uplink.Query(type=ItemType),  # type: ignore
-    ) -> ItemOverview:
+    ) -> pd.DataFrame:
         ...
+
+
+class ItemFilterContext(pydantic.BaseModel):
+    """Entrypoint for accessing economy data from poe.ninja."""
+
+    data: dict[str, pd.DataFrame]
+    _exalted_value: int = pydantic.PrivateAttr(default=0)
+    _quantile_thresholds: dict[
+        str, list[dict[str, float]]
+    ] = pydantic.PrivateAttr(default_factory=list)
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        self._exalted_value = self.data["currencies"][
+            self.data["currencies"].item_name == "Exalted Orb"
+        ].iloc[0]["chaos_value"]
+        self._quantile_thresholds = {
+            k: get_quantile_thresholds(df) for k, df in self.data.items()
+        }
+        self.data = {
+            k: self._post_process(k, df) for k, df in self.data.items()
+        }
+
+    def get_display_value(
+        self,
+        chaos_value: float,
+        round_down_by: int = 1,
+        precision: int = 0,
+    ):
+        return get_display_value(
+            chaos_value=chaos_value,
+            exalted_exchange_value=self._exalted_value,
+            round_down_by=round_down_by,
+            precision=precision,
+        )
+
+    def get_quantiles_for_threshold(
+        self,
+        key: str,
+        min_chaos_value: float,
+    ) -> Optional[dict[str, float]]:
+        for threshold in self._quantile_thresholds[key]:
+            if threshold["chaos_value"] >= min_chaos_value:
+                return threshold
+        return self._quantile_thresholds[key][-1]
+
+    @pydantic.validator("data")
+    def data_must_contain_all_types(
+        cls, v: dict[str, pd.DataFrame]
+    ) -> dict[str, pd.DataFrame]:
+        for type_ in [*CurrencyType, *ItemType]:
+            if type_.pluralized_underscored_value not in v:
+                raise ValueError(f"{type_} missing from filter context")
+        return v
+
+    @check_io(
+        df=ExtendedNinjaOverviewSchema.to_schema(),
+        out=PostProcessedNinjaOverviewSchema.to_schema(),
+    )
+    def _post_process(self, key: str, df: pd.DataFrame) -> pd.DataFrame:
+        df["exalted_value"] = df["chaos_value"].apply(
+            lambda x: x / self._exalted_value
+        )
+        df["display_value"] = df["chaos_value"].apply(
+            lambda x: get_display_value(
+                chaos_value=x,
+                exalted_exchange_value=self._exalted_value,
+                precision=2,
+            )
+        )
+        return df

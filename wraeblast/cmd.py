@@ -7,7 +7,7 @@ import cleo
 import pkg_resources
 import structlog
 
-from wraeblast import errors, insights, logging
+from wraeblast import errors, insights, logging_
 from wraeblast.filtering.parsers.extended import config, loads, render
 from wraeblast.filtering.serializers.standard import dumps
 
@@ -30,7 +30,7 @@ def check_league_option(league_name: str) -> str:
 
 class BaseCommand(cleo.Command):
     def initialize_logging(self):
-        logging.initialize_logging(
+        logging_.initialize_logging(
             default_level="DEBUG" if self.io.is_very_verbose() else "INFO"
         )
 
@@ -59,6 +59,7 @@ class RenderFilterCommand(BaseCommand):
         {--o|output= : Output file}
         {--l|league=TEMP : Current league name}
         {--N|no-sync : Prevents automatic insights syncing}
+        {--no-insights : Disables all economy data fetching}
         {--p|preset=default : Preset name}
 
     """
@@ -77,20 +78,26 @@ class RenderFilterCommand(BaseCommand):
         self.line("<info>Rendering item filter from template</info>")
 
         league = check_league_option(str(self.option("league")))
-        output_dir = pathlib.Path(str(self.option("output-directory")))
-        output_filename = self.format_filename(str(self.option("output")))
+        output_dir = pathlib.Path(str(self.option("output-directory")).strip())
+        output_filename = self.format_filename(
+            str(self.option("output")).strip()
+        )
         output_path = output_dir / output_filename
-        options_filename = str(self.option("options-file"))
-        tmpl_filename = str(self.argument("file"))
-        output_dir.mkdir(parents=True, exist_ok=True)
+        options_filename = str(self.option("options-file")).strip()
+        tmpl_filename = str(self.argument("file")).strip()
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
         loop = asyncio.get_event_loop()
-        filter_context = loop.run_until_complete(
-            insights.initialize_filter_context(
-                league=league,
-                no_sync=bool(self.option("no-sync")),
-            ),
-        )
+        filter_context = None
+        if not self.option("no-insights"):
+            filter_context = loop.run_until_complete(
+                insights.initialize_filter_context(
+                    league=league,
+                    no_sync=bool(self.option("no-sync")),
+                ),
+            )
+        else:
+            self.line("<info>Insights disabled</info>")
         if options_filename:
             with open(options_filename) as f:
                 options = config.ItemFilterPrerenderOptions.with_defaults(

@@ -64,6 +64,7 @@ def change_brightness(color: str, brightness: float) -> colors.Color:
     return c
 
 
+@functools.cache
 def colormap_pick(
     cmap_or_name: typing.Union[str, matplotlib.colors.Colormap],
     value: float,
@@ -78,7 +79,7 @@ def colormap_pick(
         cmap = cmap_or_name
     if log_scale:
         value = math.log(value) if value > 0 else vmin
-        vmin = math.log(vmin)
+        vmin = math.log(vmin) if vmin > 0 else vmin
         vmax = math.log(vmax)
     return colors.get_color_for_value(
         colormap=cmap,
@@ -289,7 +290,7 @@ def tts(
     s: str,
     filename: typing.Optional[str] = None,
     output_path: str = "output",
-    prefix: str = "",
+    prefix: str = "FilterSounds/tts",
     overwrite: bool = False,
     volume: float = 1.0,
     rate: int = 200,

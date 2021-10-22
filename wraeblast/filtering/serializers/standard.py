@@ -79,6 +79,7 @@ def serialize_condition(condition: elements.Condition) -> str:
     if (
         condition.condition_type
         in (
+            elements.ConditionType.AREALEVEL,
             elements.ConditionType.GEMLEVEL,
             elements.ConditionType.ITEMLEVEL,
             elements.ConditionType.MAPTIER,

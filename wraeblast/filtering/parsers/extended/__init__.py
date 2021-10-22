@@ -1,6 +1,6 @@
 """Extended filter parsing."""
 import math
-import typing
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import glom
 import jinja2
@@ -9,7 +9,7 @@ import jinja2.sandbox
 import ruamel.yaml
 
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from wraeblast import insights
 
 from wraeblast.filtering import colors, elements
@@ -19,10 +19,10 @@ from wraeblast.filtering.parsers.extended import config, env
 @jinja2.filters.environmentfilter
 def glom_query(
     environment: jinja2.Environment,
-    value: typing.Any,
+    value: Any,
     spec: str,
-    default: typing.Any,
-) -> typing.Any:
+    default: Any,
+) -> Any:
     return glom.glom(value, spec, default=default)
 
 
@@ -42,10 +42,10 @@ jinja2.filters.FILTERS["q"] = glom_query
 
 
 def update_template_globals(
-    ctx: "insights.ItemFilterContext",
-    globals: typing.Optional[dict[str, typing.Any]] = None,
-    options: typing.Optional[config.ItemFilterPrerenderOptions] = None,
-) -> dict[str, typing.Any]:
+    ctx: Optional["insights.ItemFilterContext"] = None,
+    globals: Optional[dict[str, Any]] = None,
+    options: Optional[config.ItemFilterPrerenderOptions] = None,
+) -> dict[str, Any]:
     if globals is None:
         globals = {}
     if options is None:
@@ -73,16 +73,18 @@ def update_template_globals(
 
 
 def loads(
-    s: typing.Union[str, bytes],
-    ctx: "insights.ItemFilterContext",
-    globals: typing.Optional[dict[str, typing.Any]] = None,
-    options: typing.Optional[config.ItemFilterPrerenderOptions] = None,
+    s: Union[str, bytes],
+    search_path: str = "filters",
+    ctx: Optional["insights.ItemFilterContext"] = None,
+    globals: Optional[dict[str, Any]] = None,
+    options: Optional[config.ItemFilterPrerenderOptions] = None,
     pre_rendered: bool = False,
 ) -> elements.ItemFilter:
     """Load a Jinja2 + YAML formatted extended filter from a string."""
     if not pre_rendered:
         rendered_template = render(
             s=s,
+            search_path=search_path,
             ctx=ctx,
             globals=globals,
             options=options,
@@ -96,10 +98,11 @@ def loads(
 
 
 def render(
-    s: typing.Union[str, bytes],
-    ctx: "insights.ItemFilterContext",
-    globals: typing.Optional[dict[str, typing.Any]] = None,
-    options: typing.Optional[config.ItemFilterPrerenderOptions] = None,
+    s: Union[str, bytes],
+    search_path: str = "filters/",
+    ctx: Optional["insights.ItemFilterContext"] = None,
+    globals: Optional[dict[str, Any]] = None,
+    options: Optional[config.ItemFilterPrerenderOptions] = None,
 ) -> str:
     """Render a Jinja2 + YAML filter template to YAML."""
     globals = update_template_globals(
@@ -107,6 +110,8 @@ def render(
         globals=globals,
         options=options,
     )
-    jinja_env = jinja2.sandbox.SandboxedEnvironment()
+    jinja_env = jinja2.sandbox.SandboxedEnvironment(
+        loader=jinja2.FileSystemLoader(search_path),
+    )
     template = jinja_env.from_string(str(s), globals=globals)
     return template.render()

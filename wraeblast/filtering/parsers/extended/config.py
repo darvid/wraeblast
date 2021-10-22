@@ -1,13 +1,17 @@
 import abc
 import enum
+import hashlib
 import math
-import typing
+from typing import Any, Hashable, Optional, Union
 
+import cachetools
+import cachetools.keys
 import matplotlib.colors
 import mergedeep
 import pandas as pd
 import pydantic
 import structlog
+from numpy import dtype
 
 from wraeblast import insights
 from wraeblast.filtering import colors
@@ -16,7 +20,7 @@ from wraeblast.filtering.parsers.extended import env
 
 logger = structlog.get_logger()
 
-ItemOrCurrencyOverviewType = typing.Union[
+ItemOrCurrencyOverviewType = Union[
     "insights.CurrencyOverview", "insights.ItemOverview"
 ]
 
@@ -30,18 +34,18 @@ default_options = {
             "base_types",
             "blighted_maps",
             "cluster_jewels",
-            "currency",
+            "currencies",
             "delirium_orbs",
-            "essences",
             "divination_cards",
+            "essences",
             "fossils",
             "fragments",
             "incubators",
-            "skill_gems",
             "maps",
             "oils",
             "prophecies",
             "scarabs",
+            "skill_gems",
             "uniques",
             "vials",
             "watchstones",
@@ -52,7 +56,7 @@ default_options = {
         "base_types": {"name": "Turbid_20_r"},
         "blighted_maps": {"name": "Devon_20"},
         "cluster_jewels": {"name": "Hawaii_20"},
-        "currency": {"name": "Curl_20"},
+        "currencies": {"name": "Curl_20"},
         "delirium_orbs": {"name": "Curl_20"},
         "divination_cards": {"name": "GrayC_20_r"},
         "essences": {"name": "Curl_20"},
@@ -60,18 +64,49 @@ default_options = {
         "fossils": {"name": "Tokyo_20"},
         "fragments": {"name": "Tokyo_20"},
         "incubators": {"name": "Tokyo_20"},
-        "skill_gems": {"name": "Curl_20"},
         "life_flasks": {"name": "Magenta_5"},
         "mana_flasks": {"name": "BluYl_2"},
         "maps_tiered": {"name": "Devon_20", "vmax": 14},
         "maps": {"name": "Devon_20"},
         "oils": {"name": "Curl_20"},
         "prophecies": {"name": "GrayC_20_r"},
+        "scarabs": {"name": "Tokyo_20"},
+        "skill_gems": {"name": "Curl_20"},
         "uniques": {"name": "Viridis_20"},
         "watchstones": {"name": "Curl_20"},
+        "vials": {"name": "Tokyo_20"},
     },
     "whitelist": {},
 }
+
+
+def _get_tags_hash(
+    data: Union[pd.DataFrame, pd.Series, float],
+    stack_size: int = 1,
+    df: Optional[pd.DataFrame] = None,
+    # TODO: Hash entire context
+    ctx: Optional["insights.ItemFilterContext"] = None,
+    ctx_key: Optional[str] = None,
+) -> tuple[Hashable, ...]:
+    kwargs: dict[str, Hashable] = {}
+    if isinstance(data, (pd.DataFrame, pd.Series)):
+        kwargs = {"key": _hash_pd_object(data), "stack_size": stack_size}
+    else:
+        kwargs = {"data": data, "stack_size": stack_size}
+    if df is not None:
+        kwargs["df"] = _hash_pd_object(df)
+    return cachetools.keys.hashkey(**kwargs)
+
+
+def _hash_pd_object(pd_object: Union[pd.DataFrame, pd.Series]) -> str:
+    if isinstance(pd_object, pd.Series):
+        pd_object = pd.DataFrame([pd_object])
+    # dtype_columns = pd_object.select_dtypes("number").columns.tolist()
+    return hashlib.sha256(
+        pd.util.hash_pandas_object(
+            pd_object[["item_name", "chaos_value"]], index=True
+        ).values
+    ).hexdigest()
 
 
 def _to_camel(string: str) -> str:
@@ -99,8 +134,8 @@ class ColormapOptions(pydantic.BaseModel):
     def pick(
         self,
         value: float,
-        vmax: typing.Optional[float] = None,
-        vmin: typing.Optional[float] = None,
+        vmax: Optional[float] = None,
+        vmin: Optional[float] = None,
         log_scale: bool = True,
     ) -> colors.Color:
         if vmax is None:
@@ -121,11 +156,11 @@ class ThresholdOptions(abc.ABC):
 
     def get_tiered_results(
         self,
-        overview: "insights.EconomyOverview",
+        df: pd.DataFrame,
         topk: int = 10,
     ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-        df_above_threshold = self.filter_overview(overview)
-        df_below_threshold = self.filter_overview(overview, inverted=True)
+        df_above_threshold = self.filter_overview(df)
+        df_below_threshold = self.filter_overview(df, inverted=True)
         return (
             df_above_threshold[:topk],
             df_above_threshold[topk:],
@@ -134,10 +169,10 @@ class ThresholdOptions(abc.ABC):
 
     def filter_overview(
         self,
-        overview: "insights.EconomyOverview",
+        df: pd.DataFrame,
         inverted: bool = False,
     ) -> pd.DataFrame:
-        return overview.df.query(self.get_dataframe_query(inverted=inverted))
+        return df.query(self.get_dataframe_query(inverted=inverted))
 
 
 class TieredThresholdOptions(ThresholdOptions, pydantic.BaseModel):
@@ -145,6 +180,12 @@ class TieredThresholdOptions(ThresholdOptions, pydantic.BaseModel):
     valuable: float = 5
     highly_valuable: float = 10
     extremely_valuable: float = 20
+    _cache: cachetools.Cache = pydantic.PrivateAttr(
+        default_factory=lambda: cachetools.LRUCache(maxsize=2048),
+    )
+
+    class Config:
+        arbitrary_types_allowed = True
 
     def check_visibility(self, row: pd.Series) -> bool:
         return row.chaos_value >= self.visibility
@@ -155,7 +196,7 @@ class TieredThresholdOptions(ThresholdOptions, pydantic.BaseModel):
 
     def get_tags(
         self,
-        data: typing.Union[pd.DataFrame, pd.Series, float],
+        data: Union[pd.DataFrame, pd.Series, float],
         stack_size: int = 1,
     ) -> list[str]:
         tags = []
@@ -176,6 +217,12 @@ class TieredThresholdOptions(ThresholdOptions, pydantic.BaseModel):
 
 class QuantileThresholdOptions(ThresholdOptions, pydantic.BaseModel):
     quantile: str
+    _cache: cachetools.Cache = pydantic.PrivateAttr(
+        default_factory=lambda: cachetools.LRUCache(maxsize=2048),
+    )
+
+    class Config:
+        arbitrary_types_allowed = True
 
     @property
     def quantile_tuple(self) -> tuple[str, int]:
@@ -185,15 +232,15 @@ class QuantileThresholdOptions(ThresholdOptions, pydantic.BaseModel):
         self,
         row: pd.Series,
         stack_size: int = 1,
-        overview: typing.Optional["insights.EconomyOverview"] = None,
+        df: Optional[pd.DataFrame] = None,
     ) -> bool:
         q_column, q_value = self.quantile_tuple
         if row[q_column] >= q_value:
             return True
-        elif overview is None:
+        elif df is None:
             return False
         chaos_value = row.chaos_value * stack_size
-        rows = overview.df[overview.df.chaos_value >= chaos_value]
+        rows = df[df.chaos_value >= chaos_value]
         if not len(rows):
             return False
         return q_value >= rows.iloc[0][q_column]  # type: ignore
@@ -203,11 +250,16 @@ class QuantileThresholdOptions(ThresholdOptions, pydantic.BaseModel):
         op = ">=" if not inverted else "<"
         return f"{q_column} {op} {q_value}"
 
+    @cachetools.cachedmethod(
+        cache=lambda self: self._cache,
+        key=_get_tags_hash,
+    )
     def get_tags(
         self,
-        data: typing.Union[pd.DataFrame, pd.Series, float],
+        data: Union[pd.DataFrame, pd.Series, float],
         stack_size: int = 1,
-        overview: typing.Optional["insights.EconomyOverview"] = None,
+        ctx: Optional["insights.ItemFilterContext"] = None,
+        ctx_key: Optional[str] = None,
     ) -> list[str]:
         get_row_tags = lambda r: [
             f'Q{r["quartile"]}',
@@ -216,12 +268,15 @@ class QuantileThresholdOptions(ThresholdOptions, pydantic.BaseModel):
             f'P{r["percentile"]}',
         ]
         if not isinstance(data, (pd.DataFrame, pd.Series)):
-            if overview is None:
-                raise RuntimeError("overview must be provided")
+            if ctx is None or ctx_key is None:
+                raise RuntimeError("filter context must be provided")
             return get_row_tags(
-                overview.get_quantiles_for_threshold(float(data) * stack_size)
+                ctx.get_quantiles_for_threshold(
+                    key=ctx_key,
+                    min_chaos_value=float(data) * stack_size,
+                )
             )
-        if overview is None:
+        if ctx is None or ctx_key is None:
             return get_row_tags(data)
         if isinstance(data, pd.DataFrame):
             quantiles = data.groupby(list(insights.quantiles.keys()))
@@ -231,14 +286,16 @@ class QuantileThresholdOptions(ThresholdOptions, pydantic.BaseModel):
                 for p in {["Q", "QU", "D", "P"][i] + str(r) for r in q}
             ]
         chaos_value = data.chaos_value * stack_size
-        rows = overview.df[overview.df.chaos_value >= chaos_value]
+        rows = ctx.data[ctx_key][
+            ctx.data[ctx_key]["chaos_value"] >= chaos_value
+        ]
         if not len(rows):
             return get_row_tags(data)
         chaos_values = rows.chaos_value
         return get_row_tags(rows[chaos_values == chaos_values.min()].iloc[0])
 
 
-ThresholdOptionsType = typing.Union[
+ThresholdOptionsType = Union[
     QuantileThresholdOptions,
     TieredThresholdOptions,
 ]
@@ -262,8 +319,8 @@ class ItemFilterPrerenderOptions(pydantic.BaseModel):
     @classmethod
     def with_defaults(
         cls,
-        overrides: typing.Optional[dict[str, typing.Any]] = None,
-        ctx: typing.Optional["insights.ItemFilterContext"] = None,
+        overrides: Optional[dict[str, Any]] = None,
+        ctx: Optional["insights.ItemFilterContext"] = None,
         set_colormap_maximums: bool = True,
     ) -> "ItemFilterPrerenderOptions":
         if overrides is None:
