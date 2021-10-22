@@ -46,7 +46,7 @@ uplink = { channel = "pip" }
 
 [tool.poetry]
 name = "wraeblast"
-version = "0.1.2"
+version = "0.1.3"
 description = "Tools for Path of Exile filter generation and economy data analysis."
 authors = ["David Gidwani <david.gidwani@gmail.com>"]
 license = "MIT"
