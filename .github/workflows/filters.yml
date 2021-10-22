@@ -34,9 +34,9 @@ jobs:
           sudo apt-get install awscli -y
           python -m pip install --upgrade poetry
           poetry install
-      - name: Sync economy data
-        run: poetry run wraeblast sync_insight
-        continue-on-error: true
+      # - name: Sync economy data
+      #   run: poetry run wraeblast sync_insight
+      #   continue-on-error: true
       - name: Sync TTS synthesized alert sounds
         run: |
           mkdir -p output/FilterSounds/tts
