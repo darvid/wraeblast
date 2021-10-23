@@ -1,0 +1,134 @@
+{
+    "thresholds": {
+        "artifacts": {
+            "quantile": "QU4"
+        },
+        "base_types": {
+            "quantile": "QU4"
+        },
+        "blighted_maps": {
+            "quantile": "QU4"
+        },
+        "cluster_jewels": {
+            "quantile": "QU4"
+        },
+        "currencies": {
+            "quantile": "QU4"
+        },
+        "delirium_orbs": {
+            "quantile": "QU4"
+        },
+        "divination_cards": {
+            "quantile": "QU4"
+        },
+        "essences": {
+            "quantile": "QU4"
+        },
+        "fossils": {
+            "quantile": "QU4"
+        },
+        "fragments": {
+            "quantile": "QU4"
+        },
+        "incubators": {
+            "quantile": "QU4"
+        },
+        "maps": {
+            "quantile": "QU4"
+        },
+        "oils": {
+            "quantile": "QU4"
+        },
+        "prophecies": {
+            "quantile": "QU4"
+        },
+        "scarabs": {
+            "quantile": "QU4"
+        },
+        "skill_gems": {
+            "quantile": "QU4"
+        },
+        "uniques": {
+            "quantile": "QU4"
+        },
+        "vials": {
+            "quantile": "QU4"
+        },
+        "watchstones": {
+            "quantile": "QU4"
+        }
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Algae_20"
+        },
+        "cluster_jewels": {
+            "name": "Algae_20"
+        },
+        "currencies": {
+            "name": "Algae_20"
+        },
+        "delirium_orbs": {
+            "name": "Algae_20"
+        },
+        "divination_cards": {
+            "name": "Algae_20"
+        },
+        "essences": {
+            "name": "Algae_20"
+        },
+        "flasks": {
+            "name": "Algae_20"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Algae_20"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "Algae_20",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Algae_20"
+        },
+        "oils": {
+            "name": "Algae_20"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "scarabs": {
+            "name": "Algae_20"
+        },
+        "skill_gems": {
+            "name": "Algae_20"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "Algae_20"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}

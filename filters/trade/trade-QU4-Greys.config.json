@@ -1,0 +1,134 @@
+{
+    "thresholds": {
+        "artifacts": {
+            "quantile": "QU4"
+        },
+        "base_types": {
+            "quantile": "QU4"
+        },
+        "blighted_maps": {
+            "quantile": "QU4"
+        },
+        "cluster_jewels": {
+            "quantile": "QU4"
+        },
+        "currencies": {
+            "quantile": "QU4"
+        },
+        "delirium_orbs": {
+            "quantile": "QU4"
+        },
+        "divination_cards": {
+            "quantile": "QU4"
+        },
+        "essences": {
+            "quantile": "QU4"
+        },
+        "fossils": {
+            "quantile": "QU4"
+        },
+        "fragments": {
+            "quantile": "QU4"
+        },
+        "incubators": {
+            "quantile": "QU4"
+        },
+        "maps": {
+            "quantile": "QU4"
+        },
+        "oils": {
+            "quantile": "QU4"
+        },
+        "prophecies": {
+            "quantile": "QU4"
+        },
+        "scarabs": {
+            "quantile": "QU4"
+        },
+        "skill_gems": {
+            "quantile": "QU4"
+        },
+        "uniques": {
+            "quantile": "QU4"
+        },
+        "vials": {
+            "quantile": "QU4"
+        },
+        "watchstones": {
+            "quantile": "QU4"
+        }
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Greys_9"
+        },
+        "cluster_jewels": {
+            "name": "Greys_9"
+        },
+        "currencies": {
+            "name": "Greys_9"
+        },
+        "delirium_orbs": {
+            "name": "Greys_9"
+        },
+        "divination_cards": {
+            "name": "Greys_9"
+        },
+        "essences": {
+            "name": "Greys_9"
+        },
+        "flasks": {
+            "name": "Greys_9"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Greys_9"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "Greys_9",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Greys_9"
+        },
+        "oils": {
+            "name": "Greys_9"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "scarabs": {
+            "name": "Greys_9"
+        },
+        "skill_gems": {
+            "name": "Greys_9"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "Greys_9"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}

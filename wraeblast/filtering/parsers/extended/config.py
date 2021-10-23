@@ -330,11 +330,7 @@ class ItemFilterPrerenderOptions(pydantic.BaseModel):
         )
         if ctx is not None:
             for (category_name, colormap_options) in options.colormaps.items():
-                try:
-                    overview: ItemOrCurrencyOverviewType = getattr(
-                        ctx, category_name
-                    )
-                except AttributeError:
+                if category_name not in ctx.data:
                     continue
 
                 if set_colormap_maximums and (
@@ -342,7 +338,9 @@ class ItemFilterPrerenderOptions(pydantic.BaseModel):
                     or category_name not in overrides["colormaps"]
                     or "vmax" not in overrides["colormaps"][category_name]
                 ):
-                    colormap_options.vmax = overview.max_chaos_value()
+                    colormap_options.vmax = ctx.data[category_name][
+                        "chaos_value"
+                    ].max()
 
         logger.debug("options.initialized")
         return options

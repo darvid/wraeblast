@@ -1,0 +1,134 @@
+{
+    "thresholds": {
+        "artifacts": {
+            "quantile": "D2"
+        },
+        "base_types": {
+            "quantile": "D2"
+        },
+        "blighted_maps": {
+            "quantile": "D2"
+        },
+        "cluster_jewels": {
+            "quantile": "D2"
+        },
+        "currencies": {
+            "quantile": "D2"
+        },
+        "delirium_orbs": {
+            "quantile": "D2"
+        },
+        "divination_cards": {
+            "quantile": "D2"
+        },
+        "essences": {
+            "quantile": "D2"
+        },
+        "fossils": {
+            "quantile": "D2"
+        },
+        "fragments": {
+            "quantile": "D2"
+        },
+        "incubators": {
+            "quantile": "D2"
+        },
+        "maps": {
+            "quantile": "D2"
+        },
+        "oils": {
+            "quantile": "D2"
+        },
+        "prophecies": {
+            "quantile": "D2"
+        },
+        "scarabs": {
+            "quantile": "D2"
+        },
+        "skill_gems": {
+            "quantile": "D2"
+        },
+        "uniques": {
+            "quantile": "D2"
+        },
+        "vials": {
+            "quantile": "D2"
+        },
+        "watchstones": {
+            "quantile": "D2"
+        }
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Ice_20"
+        },
+        "cluster_jewels": {
+            "name": "Ice_20"
+        },
+        "currencies": {
+            "name": "Ice_20"
+        },
+        "delirium_orbs": {
+            "name": "Ice_20"
+        },
+        "divination_cards": {
+            "name": "Ice_20"
+        },
+        "essences": {
+            "name": "Ice_20"
+        },
+        "flasks": {
+            "name": "Ice_20"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Ice_20"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "Ice_20",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Ice_20"
+        },
+        "oils": {
+            "name": "Ice_20"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "scarabs": {
+            "name": "Ice_20"
+        },
+        "skill_gems": {
+            "name": "Ice_20"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "Ice_20"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}

@@ -244,7 +244,6 @@ async def initialize_insights_cache(
             lines=df.shape[0],
             type=t.value,
         )
-        # breakpoint()
         cache.put(f"i_{t.value}", df, format="table")
     return cache
 
@@ -325,40 +324,6 @@ class NinjaCurrencyOverviewSchema(SchemaModel):
     pay_listing_count: Series[float] = Field(
         alias="pay.listing_count", coerce=True, nullable=True
     )
-    receive_id: Series[int] = Field(alias="receive.id")
-    receive_league_id: Series[int] = Field(alias="receive.league_id")
-    receive_pay_currency_id: Series[int] = Field(
-        alias="receive.pay_currency_id",
-    )
-    receive_get_currency_id: Series[int] = Field(
-        alias="receive.get_currency_id",
-    )
-    receive_sample_time_utc: Series[
-        Annotated[pd.DatetimeTZDtype, "ns", "utc"]
-    ] = Field(alias="receive.sample_time_utc", coerce=True)
-    receive_count: Series[int] = Field(alias="receive.count")
-    receive_value: Series[float] = Field(alias="receive.value")
-    receive_data_point_count: Series[int] = Field(
-        alias="receive.data_point_count",
-    )
-    pay_spark_line_data: Series[Object] = Field(
-        alias="pay_spark_line.data",
-    )
-    pay_spark_line_total_change: Series[float] = Field(
-        alias="pay_spark_line.total_change",
-    )
-    low_confidence_pay_spark_line_data: Series[Object] = Field(
-        alias="low_confidence_pay_spark_line.data",
-    )
-    low_confidence_pay_spark_line_total_change: Series[float] = Field(
-        alias="low_confidence_pay_spark_line.total_change",
-    )
-    low_confidence_receive_spark_line_data: Series[Object] = Field(
-        alias="low_confidence_receive_spark_line.data",
-    )
-    low_confidence_receive_spark_line_total_change: Series[float] = Field(
-        alias="low_confidence_receive_spark_line.total_change",
-    )
 
 
 class NinjaItemOverviewSchema(SchemaModel):
@@ -407,6 +372,7 @@ class ExtendedNinjaOverviewSchema(SchemaModel):
     num_influences: Optional[Series[int]] = Field(nullable=True)
     orb_name: Optional[Series[String]] = Field(nullable=True)
     stack_size: Optional[Series[float]] = Field(nullable=True)
+    uber_blight: Optional[Series[bool]] = Field(nullable=True)
     variant: Optional[Series[String]] = Field(nullable=True)
 
 
@@ -421,10 +387,12 @@ def transform_ninja_df(df: pd.DataFrame) -> pd.DataFrame:
     item_overview_schema = NinjaItemOverviewSchema.to_schema()
     is_currency_overview = False
 
+    df = df.fillna(0)
+
     try:
         df = currency_overview_schema.validate(df)
         is_currency_overview = True
-    except SchemaError:
+    except SchemaError as e:
         df = item_overview_schema.validate(df)
 
     if is_currency_overview:
@@ -464,6 +432,11 @@ def transform_ninja_df(df: pd.DataFrame) -> pd.DataFrame:
     for label in ("currency_type_name", "skill_gem_name"):
         if label in df.columns:
             output["item_name"] = df[label]
+
+    if "map_tier" in df.columns:
+        output["uber_blight"] = df["name"].map(
+            lambda name: name.startswith("Blight-ravaged")
+        )
 
     if (
         "base_type" in df.columns

@@ -280,20 +280,28 @@ rules:
   # Maps - grouped by tier >= 14 and chaos value quantile
   # XXX: poe.ninja doesn't currently provide data for influenced maps
   {%- for group, rows in ctx.data.maps.query(
-        "map_tier >= 14").groupby(["map_tier", "quintile"]): -%}
+        "map_tier >= 14").groupby(["map_tier", "quintile", "uber_blight"]): -%}
   {%- set min_value = rows["chaos_value"].min() %}
   - conditions:
       Class: Maps
       BaseType:
         {%- for index, row in rows.iterrows(): %}
-        - '{{ row.base_type }}'
+        {%- set base_type = (
+              row.base_type[15:]
+              if row.uber_blight
+              else row.base_type
+        ) %}
+        - '{{ base_type }}'
         {%- endfor %}
       MapTier: '{{ group[0]|int }}'
+      {%- if rows.iloc[0].uber_blight: %}
+      UberBlightedMap: true
+      {%- endif %}
     actions:
       {{ macros.set_colors_from_colormap(options.colormaps.maps, min_value) }}
       CustomAlertSound: '{{
         tts("tier {} {}".format(
-          group[0],
+          group[0]|int,
           ctx.get_display_value(min_value),
         ))
       }}'
@@ -308,7 +316,7 @@ rules:
       Class: Maps
       MapTier: '{{ map_tier|int }}'
       AreaLevel:
-        '<=': '{{ 57 + map_tier }}'
+        '<=': '{{ 57 + map_tier|int }}'
     actions:
       {{ macros.set_colors_from_colormap(options.colormaps.maps_tiered, map_tier, 16) }}
     tags:
@@ -321,7 +329,7 @@ rules:
       Class: Maps
       MapTier: '{{ map_tier|int }}'
       AreaLevel:
-        '>': '{{ 57 + map_tier }}'
+        '>': '{{ 57 + map_tier|int }}'
     actions:
       {{ macros.set_colors_from_colormap(options.colormaps.maps_tiered, map_tier, 14) }}
     tags:
@@ -645,9 +653,8 @@ rules:
       CustomAlertSound: '{{ tts(
         "Chaos Orb {}".format(
           ctx.get_display_value(stack_size)
-        ),
-        prefix=tts_prefix)
-      }}'
+        )
+      ) }}'
     tags:
       - currencies
       - chaos
@@ -1086,7 +1093,9 @@ rules:
   {%- for index, row in clusters_topk.iterrows(): %}
   {# {%- if row.cluster_jewel_enchantment: %} #}
   - conditions:
+      {%- if row.level_required: %}
       ItemLevel: {'>=': '{{ row.level_required|int }}'}
+      {%- endif %}
       Rarity: {'<=': Rare}
       EnchantmentPassiveNode: {'==': '{{ row.cluster_jewel_enchantment }}'}
       EnchantmentPassiveNum: {'==': '{{ row.cluster_jewel_passives }}'}

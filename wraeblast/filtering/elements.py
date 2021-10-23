@@ -88,6 +88,7 @@ class ConditionType(enum.Enum):
     SOCKETS = "Sockets"
     STACKSIZE = "StackSize"
     SYNTHESISEDITEM = "SynthesisedItem"
+    UBERBLIGHTEDMAP = "UberBlightedMap"
     WIDTH = "Width"
 
 

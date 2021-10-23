@@ -106,7 +106,8 @@
       {%- if "map_tier" in groups: %}
       MapTier: {'>=': '{{ rows.iloc[0].map_tier|int }}'}
       {%- endif %}
-      {%- if "level_required" in groups: %}
+      {%- if ("level_required" in groups
+                and group[groups.index("level_required")]): %}
       ItemLevel: {'>=': '{{ group[groups.index("level_required")]|int }}'}
       {%- endif %}
       {%- if "influences" in groups: %}

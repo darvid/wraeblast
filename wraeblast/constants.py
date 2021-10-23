@@ -62,6 +62,7 @@ class ClusterJewelMinorPassive(enum.Enum):
     PHYSICAL_DOT = "Physical Damage over Time"
     PROJECTILE_DAMAGE = "Projectile Damage"
     SPELL_DAMAGE = "Spell Damage"
+    SPELL_SUPPRESSION = "Chance to Suppress Spell Damage"
     STRENGTH = "Strength"
     TOTEM_DAMAGE = "Totem Damage"
     TRAP_AND_MINE_DAMAGE = "Trap and Mine Damage"
@@ -105,7 +106,7 @@ cluster_jewel_passives_to_names = {
         r"\d+% increased Attack Damage while holding a Shield"
     ),
     ClusterJewelMinorPassive.AURA_EFFECT: (
-        r"\d+% increased effect of Non-Curse Auras from your Skills"
+        r"\d+% increased Mana Reservation Efficiency of Skills"
     ),
     ClusterJewelMinorPassive.AXE_AND_SWORD_DAMAGE: (
         r"Axe Attacks deal \d+% increased Damage with Hits and Ailments, "
@@ -117,7 +118,7 @@ cluster_jewel_passives_to_names = {
     ),
     ClusterJewelMinorPassive.BRAND_DAMAGE: r"\d+% increased Brand Damage",
     ClusterJewelMinorPassive.CHANCE_TO_BLOCK_ATTACK_DAMAGE: (
-        r"\d+% Chance to Block Attack Damage"
+        r"\+?\d+% Chance to Block Attack Damage"
     ),
     ClusterJewelMinorPassive.CHANCE_TO_BLOCK_SPELL_DAMAGE: (
         r"\d+% Chance to Block Spell Damage"
@@ -205,6 +206,9 @@ cluster_jewel_passives_to_names = {
         r"\d+% increased Projectile Damage"
     ),
     ClusterJewelMinorPassive.SPELL_DAMAGE: r"\d+% increased Spell Damage",
+    ClusterJewelMinorPassive.SPELL_SUPPRESSION: (
+        r"\+\d+% chance to Suppress Spell Damage"
+    ),
     ClusterJewelMinorPassive.STRENGTH: r"\+\d+ to Strength",
     ClusterJewelMinorPassive.TOTEM_DAMAGE: r"\d+% increased Totem Damage",
     ClusterJewelMinorPassive.TRAP_AND_MINE_DAMAGE: (

@@ -1,0 +1,134 @@
+{
+    "thresholds": {
+        "artifacts": {
+            "quantile": "QU5"
+        },
+        "base_types": {
+            "quantile": "QU5"
+        },
+        "blighted_maps": {
+            "quantile": "QU5"
+        },
+        "cluster_jewels": {
+            "quantile": "QU5"
+        },
+        "currencies": {
+            "quantile": "QU5"
+        },
+        "delirium_orbs": {
+            "quantile": "QU5"
+        },
+        "divination_cards": {
+            "quantile": "QU5"
+        },
+        "essences": {
+            "quantile": "QU5"
+        },
+        "fossils": {
+            "quantile": "QU5"
+        },
+        "fragments": {
+            "quantile": "QU5"
+        },
+        "incubators": {
+            "quantile": "QU5"
+        },
+        "maps": {
+            "quantile": "QU5"
+        },
+        "oils": {
+            "quantile": "QU5"
+        },
+        "prophecies": {
+            "quantile": "QU5"
+        },
+        "scarabs": {
+            "quantile": "QU5"
+        },
+        "skill_gems": {
+            "quantile": "QU5"
+        },
+        "uniques": {
+            "quantile": "QU5"
+        },
+        "vials": {
+            "quantile": "QU5"
+        },
+        "watchstones": {
+            "quantile": "QU5"
+        }
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Oranges_9"
+        },
+        "cluster_jewels": {
+            "name": "Oranges_9"
+        },
+        "currencies": {
+            "name": "Oranges_9"
+        },
+        "delirium_orbs": {
+            "name": "Oranges_9"
+        },
+        "divination_cards": {
+            "name": "Oranges_9"
+        },
+        "essences": {
+            "name": "Oranges_9"
+        },
+        "flasks": {
+            "name": "Oranges_9"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Oranges_9"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "Oranges_9",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Oranges_9"
+        },
+        "oils": {
+            "name": "Oranges_9"
+        },
+        "prophecies": {
+            "name": "Turbid_20_r"
+        },
+        "scarabs": {
+            "name": "Oranges_9"
+        },
+        "skill_gems": {
+            "name": "Oranges_9"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "watchstones": {
+            "name": "Oranges_9"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}
