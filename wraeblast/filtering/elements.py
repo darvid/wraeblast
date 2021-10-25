@@ -82,6 +82,7 @@ class ConditionType(enum.Enum):
     QUALITY = "Quality"
     RARITY = "Rarity"
     REPLICA = "Replica"
+    SCOURGED = "Scourged"
     SHAPEDMAP = "ShapedMap"
     SHAPERITEM = "ShaperItem"
     SOCKETGROUP = "SocketGroup"

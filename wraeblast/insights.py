@@ -429,6 +429,10 @@ def transform_ninja_df(df: pd.DataFrame) -> pd.DataFrame:
         if "currency_type_name" in df.columns
         else df["name"]
     )
+    if not is_currency_overview:
+        output["scourged"] = output["item_name"].map(
+            lambda name: name.startswith("Scourged")
+        )
     for label in ("currency_type_name", "skill_gem_name"):
         if label in df.columns:
             output["item_name"] = df[label]

@@ -280,7 +280,7 @@ rules:
   # Maps - grouped by tier >= 14 and chaos value quantile
   # XXX: poe.ninja doesn't currently provide data for influenced maps
   {%- for group, rows in ctx.data.maps.query(
-        "map_tier >= 14").groupby(["map_tier", "quintile", "uber_blight"]): -%}
+        "map_tier >= 14").groupby(["map_tier", "quintile", "scourged", "uber_blight"]): -%}
   {%- set min_value = rows["chaos_value"].min() %}
   - conditions:
       Class: Maps
@@ -289,13 +289,21 @@ rules:
         {%- set base_type = (
               row.base_type[15:]
               if row.uber_blight
-              else row.base_type
+              else (
+                row.base_type[9:]
+                if row.scourged
+                else
+                row.base_type
+              )
         ) %}
         - '{{ base_type }}'
         {%- endfor %}
       MapTier: '{{ group[0]|int }}'
       {%- if rows.iloc[0].uber_blight: %}
       UberBlightedMap: true
+      {%- endif %}
+      {%- if rows.iloc[0].scourged: %}
+      Scourged: true
       {%- endif %}
     actions:
       {{ macros.set_colors_from_colormap(options.colormaps.maps, min_value) }}

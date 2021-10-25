@@ -74,6 +74,7 @@ condition: COND_AREALEVEL op? NUMBER
          | COND_SHAPERITEM bool
          | COND_HASINFLUENCE [influence+]
          | COND_FRACTUREDITEM bool
+         | COND_SCOURGED bool
          | COND_SYNTHESISEDITEM bool
          | COND_ELDERMAP bool
          | COND_SHAPEDMAP bool
@@ -165,6 +166,7 @@ COND_PROPHECY: "Prophecy"
 COND_QUALITY: "Quality"
 COND_RARITY: "Rarity"
 COND_REPLICA: "Replica"
+COND_SCOURGED: "Scourged"
 COND_SHAPEDMAP: "ShapedMap"
 COND_SHAPERITEM: "ShaperItem"
 COND_SOCKETGROUP: "SocketGroup"
