@@ -12,13 +12,15 @@ presets:
     tags: &endgame_tags
       hidden: &endgame_tags_hidden
         - garbage
+        - scrolls
         {{- macros.set_preset_quantile_tags(hidden=True)|indent(8) }}
         - [currencies, shards, QU3]
       visible: &endgame_tags_visible
-        - [artifacts, garbage]
         - [fragments, simulacrum]
         - [fragments, breach, 'breach:chayula']
         - [fragments, 'stacks:5']
+        - [scrolls, stacks]
+        - [maps, non_economy]
         {{- macros.set_preset_quantile_tags(hidden=False)|indent(8) }}
     replace:
       garbage: [garbage, endgame]
@@ -41,9 +43,6 @@ styles:
     actions:
       SetFontSize: 45
       DisableDropSound: true
-  non_economy:
-    actions:
-      SetFontSize: 35
   quest_items:
     actions:
       MinimapIcon: [0, Green, Hexagon]
@@ -235,11 +234,19 @@ rules:
   - conditions:
       BaseType:
         - Portal Scroll
-        - Scroll Fragment
+        - Scroll of Wisdom
+      StackSize: {'>=': 5}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.base_types, 20, 20) }}
+    tags: [currencies, scrolls, stacks]
+
+  - conditions:
+      BaseType:
+        - Portal Scroll
         - Scroll of Wisdom
     actions:
       {{ macros.set_colors_from_colormap(options.colormaps.base_types, 20, 20) }}
-    tags: [currencies, garbage, scrolls]
+    tags: [currencies, scrolls]
 
   # Invitations
   {%- for index, row in ctx.data.invitations.iterrows(): %}
