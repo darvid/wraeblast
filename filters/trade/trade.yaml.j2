@@ -207,15 +207,6 @@ styles:
       {{ macros.set_colors_from_colormap(options.colormaps.base_types, 10, 20) }}
     tags:
       - [base_types, rares]
-  {# overrides.artifacts:
-    actions:
-      MinimapIcon: [1, Grey, Moon]
-      SetFontSize: 40
-    tags:
-      - [artifacts, QU1]
-      - [artifacts, QU2]
-      - [artifacts, QU3]
-      - [artifacts, QU4] #}
   overrides.currencies:
     actions:
       SetFontSize: 45
@@ -238,7 +229,8 @@ rules:
       StackSize: {'>=': 5}
     actions:
       {{ macros.set_colors_from_colormap(options.colormaps.base_types, 20, 20) }}
-    tags: [currencies, scrolls, stacks]
+      MinimapIcon: -1
+    tags: [scrolls, stacks]
 
   - conditions:
       BaseType:
@@ -246,7 +238,8 @@ rules:
         - Scroll of Wisdom
     actions:
       {{ macros.set_colors_from_colormap(options.colormaps.base_types, 20, 20) }}
-    tags: [currencies, scrolls]
+      MinimapIcon: -1
+    tags: [scrolls]
 
   # Invitations
   {%- for index, row in ctx.data.invitations.iterrows(): %}
@@ -350,7 +343,6 @@ rules:
     tags:
       - maps
       - non_economy
-      - garbage
   {%- endfor %}
 
   # Delirium Orbs
@@ -658,7 +650,7 @@ rules:
   - conditions:
       StackSize: { '{{op}}': {{stack_size}} }
       Class: Currency
-      BaseType: Chaos Orb
+      BaseType: {'==': 'Chaos Orb'}
     actions:
       {{ macros.set_colors_from_colormap(
           options.colormaps.currencies,
@@ -770,7 +762,7 @@ rules:
   - conditions:
       StackSize: { '{{op}}': {{stack_size}} }
       Class: Currency
-      BaseType: {{ row.item_name }}
+      BaseType: {'==': "{{ row.item_name }}"}
     actions:
       {{ macros.set_colors_from_colormap(
           options.colormaps.currencies,
@@ -1106,7 +1098,6 @@ rules:
   # Cluster jewels
   {%- set clusters_topk, clusters_show, _ = options.thresholds.cluster_jewels.get_tiered_results(ctx.data.cluster_jewels) -%}
   {%- for index, row in clusters_topk.iterrows(): %}
-  {# {%- if row.cluster_jewel_enchantment: %} #}
   - conditions:
       {%- if row.level_required: %}
       ItemLevel: {'>=': '{{ row.level_required|int }}'}
@@ -1131,7 +1122,6 @@ rules:
           thresholds=options.thresholds.cluster_jewels,
           ctx_key="cluster_jewels",
       ) }}
-  {# {%- endif %} #}
   {%- endfor %}
 
   {% for group, df in clusters_show.groupby([
@@ -1203,6 +1193,7 @@ rules:
       CustomAlertSound: '{{ tts("six socket") }}'
     tags:
       - six_sockets
+      - garbage
 
   # Influenced base items
   {{ macros.multi_base_type_by_quantile(
