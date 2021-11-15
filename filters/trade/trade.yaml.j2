@@ -226,7 +226,7 @@ rules:
       BaseType:
         - Portal Scroll
         - Scroll of Wisdom
-      StackSize: {'>=': 5}
+      StackSize: {'>=': 10}
     actions:
       {{ macros.set_colors_from_colormap(options.colormaps.base_types, 20, 20) }}
       MinimapIcon: -1
@@ -1199,11 +1199,11 @@ rules:
   {{ macros.multi_base_type_by_quantile(
       ctx_key="base_types",
       thresholds=options.thresholds.base_types,
-      query="num_influences == 1",
+      query="num_influences <= 1",
       conditions={"Rarity": {"<": "Unique"}},
       groups=["level_required", "influences", "percentile"],
       tags=["base_types", "gear"],
-      tts_phrase="influenced base",
+      tts_phrase="base",
     ) }}
 
   {%- set garbage_color = options.colormaps.base_types.pick(1, 20) -%}
