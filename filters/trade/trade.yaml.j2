@@ -1031,8 +1031,9 @@ rules:
       thresholds=options.thresholds.uniques,
       conditions={"Rarity": "Unique"},
       groups=["base_type", "level_required"],
+      sort_by=["level_required", "base_type"],
       tags=["unique", "accessories"],
-      tts_phrase="unique accessory",
+      tts_phrase="unique accessory up to",
     ) }}
 
   # Uniques - armor
@@ -1041,8 +1042,9 @@ rules:
       thresholds=options.thresholds.uniques,
       conditions={"Rarity": "Unique"},
       groups=["base_type", "level_required"],
+      sort_by=["level_required", "base_type"],
       tags=["unique", "armor"],
-      tts_phrase="unique armor",
+      tts_phrase="unique armor up to",
     ) }}
 
   # Uniques - flasks
@@ -1051,8 +1053,9 @@ rules:
       thresholds=options.thresholds.uniques,
       conditions={"Rarity": "Unique"},
       groups=["base_type", "level_required"],
+      sort_by=["level_required", "base_type"],
       tags=["unique", "flasks"],
-      tts_phrase="unique flask",
+      tts_phrase="unique flask up to",
     ) }}
 
   # Uniques - jewels
@@ -1061,8 +1064,9 @@ rules:
       thresholds=options.thresholds.uniques,
       conditions={"Rarity": "Unique"},
       groups=["base_type", "level_required"],
+      sort_by=["level_required", "base_type"],
       tags=["unique", "jewels"],
-      tts_phrase="unique jewel",
+      tts_phrase="unique jewel up to",
     ) }}
 
   # Uniques - maps
@@ -1071,8 +1075,9 @@ rules:
       thresholds=options.thresholds.uniques,
       groups=["map_tier"],
       conditions={"Rarity": "Unique"},
+      sort_by=["level_required", "base_type"],
       tags=["unique", "maps"],
-      tts_phrase="unique map",
+      tts_phrase="unique map up to",
     ) }}
 
   # Uniques - weapons
@@ -1081,9 +1086,10 @@ rules:
       thresholds=options.thresholds.uniques,
       query="(links < 6)",
       groups=["base_type", "level_required"],
+      sort_by=["level_required", "base_type"],
       conditions={"Rarity": "Unique"},
       tags=["unique", "weapons"],
-      tts_phrase="unique weapon",
+      tts_phrase="unique weapon up to",
     ) }}
 
   # Uniques (catch-all)
@@ -1202,6 +1208,8 @@ rules:
       query="num_influences <= 1",
       conditions={"Rarity": {"<": "Unique"}},
       groups=["level_required", "influences", "percentile"],
+      sort_by=["level_required", "chaos_value"],
+      sort_by_asc=False,
       tags=["base_types", "gear"],
       tts_phrase="base",
     ) }}

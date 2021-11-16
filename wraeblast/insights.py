@@ -1,6 +1,4 @@
-import collections
 import collections.abc
-import datetime
 import enum
 import os
 from typing import (
@@ -24,7 +22,7 @@ from pandera.decorators import check_io, check_output
 from pandera.errors import SchemaError
 from pandera.model import SchemaModel
 from pandera.model_components import Field
-from pandera.typing import DataFrame, Object, Series, String
+from pandera.typing import Series, String
 
 from wraeblast import constants, errors
 from wraeblast.filtering.elements import ItemFilter
@@ -422,6 +420,9 @@ def transform_ninja_df(df: pd.DataFrame) -> pd.DataFrame:
             )
         except IndexError:
             pass
+
+    if "sparkline.data" in df.columns:
+        df = df[df["sparkline.data"].str.len() != 0].to_frame()
 
     output = pd.DataFrame()
     output["item_name"] = (

@@ -15,6 +15,7 @@ from wraeblast.filtering.parsers.extended import config
 
 
 default_threshold_overrides = {
+    "base_types": {"quantile": "D9"},
     "blighted_maps": {"quantile": "QU1"},
     "delirium_orbs": {"quantile": "QU1"},
     "divination_cards": {"quantile": "QU4"},
@@ -200,6 +201,7 @@ class BuildCommand(cmd.BaseCommand):
                 secondary_colormap=secondary_colormap,
                 tag=tag,
                 output_directory=output_directory,
+                overrides=overrides,
             )
             if quantiles is not None:
                 for quantile in quantiles:

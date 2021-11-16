@@ -4,10 +4,10 @@
             "quantile": "QU5"
         },
         "base_types": {
-            "quantile": "QU5"
+            "quantile": "D9"
         },
         "blighted_maps": {
-            "quantile": "QU5"
+            "quantile": "QU1"
         },
         "cluster_jewels": {
             "quantile": "QU5"
@@ -16,13 +16,13 @@
             "quantile": "QU5"
         },
         "delirium_orbs": {
-            "quantile": "QU5"
+            "quantile": "QU1"
         },
         "divination_cards": {
-            "quantile": "QU5"
+            "quantile": "QU4"
         },
         "essences": {
-            "quantile": "QU5"
+            "quantile": "QU2"
         },
         "fossils": {
             "quantile": "QU5"
@@ -31,7 +31,7 @@
             "quantile": "QU5"
         },
         "incubators": {
-            "quantile": "QU5"
+            "quantile": "QU2"
         },
         "maps": {
             "quantile": "QU5"
@@ -40,19 +40,19 @@
             "quantile": "QU5"
         },
         "prophecies": {
-            "quantile": "QU5"
+            "quantile": "QU4"
         },
         "scarabs": {
-            "quantile": "QU5"
+            "quantile": "QU2"
         },
         "skill_gems": {
-            "quantile": "QU5"
+            "quantile": "QU4"
         },
         "uniques": {
-            "quantile": "QU5"
+            "quantile": "QU4"
         },
         "vials": {
-            "quantile": "QU5"
+            "quantile": "QU2"
         },
         "watchstones": {
             "quantile": "QU5"

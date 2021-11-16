@@ -92,17 +92,21 @@
       groups=["quintile"],
       tags=[],
       conditions={},
+      sort_by=["chaos_value"],
+      sort_by_asc=False,
       base_type_field="base_type",
       tts_phrase="base item"): -%}
   {%- set df = ctx.data[ctx_key] if not query else ctx.data[ctx_key].query(query) -%}
   {%- set df = df.query(thresholds.get_dataframe_query()) -%}
+  {%- set df = df.sort_values(sort_by, ascending=sort_by_asc) -%}
   {%- for group, rows in df.groupby(groups): %}
   {%- if not rows.empty: %}
   - conditions:
       BaseType:
-        {%- for base_type in rows.groupby(base_type_field).groups.keys(): %}
-        - "{{ base_type }}"
-        {%- endfor %}
+        '==':
+          {%- for base_type in rows.groupby(base_type_field).groups.keys(): %}
+          - "{{ base_type }}"
+          {%- endfor %}
       {%- if "map_tier" in groups: %}
       MapTier: {'>=': '{{ rows.iloc[0].map_tier|int }}'}
       {%- endif %}
