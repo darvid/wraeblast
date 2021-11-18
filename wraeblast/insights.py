@@ -422,7 +422,7 @@ def transform_ninja_df(df: pd.DataFrame) -> pd.DataFrame:
             pass
 
     if "sparkline.data" in df.columns:
-        df = df[df["sparkline.data"].str.len() != 0].to_frame()
+        df = df.loc[df["sparkline.data"].str.len() != 0]
 
     output = pd.DataFrame()
     output["item_name"] = (
