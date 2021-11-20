@@ -43,7 +43,7 @@
             "quantile": "QU4"
         },
         "scarabs": {
-            "quantile": "QU2"
+            "quantile": "QU1"
         },
         "skill_gems": {
             "quantile": "QU4"

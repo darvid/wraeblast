@@ -1201,11 +1201,23 @@ rules:
       - six_sockets
       - garbage
 
+  # Stygian Vises
+  - conditions:
+      BaseType: {'==': "Stygian Vise"}
+      ItemLevel: {'>=': 81}
+      Rarity: {'<': Unique}
+    actions:
+      {{ macros.set_colors_from_colormap(options.colormaps.base_types, 5, 20) }}
+      CustomAlertSound: '{{ tts("stygian vise") }}'
+    tags:
+      - base_types
+      - abyss
+
   # Influenced base items
   {{ macros.multi_base_type_by_quantile(
       ctx_key="base_types",
       thresholds=options.thresholds.base_types,
-      query="num_influences <= 1",
+      query="num_influences >= 1",
       conditions={"Rarity": {"<": "Unique"}},
       groups=["level_required", "influences", "percentile"],
       sort_by=["level_required", "chaos_value"],

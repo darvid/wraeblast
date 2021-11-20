@@ -22,7 +22,7 @@ default_threshold_overrides = {
     "essences": {"quantile": "QU2"},
     "incubators": {"quantile": "QU2"},
     "prophecies": {"quantile": "QU4"},
-    "scarabs": {"quantile": "QU2"},
+    "scarabs": {"quantile": "QU1"},
     "skill_gems": {"quantile": "QU4"},
     "uniques": {"quantile": "QU4"},
     "vials": {"quantile": "QU2"},
