@@ -2,6 +2,15 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.0 (2022-02-04)
+### Feature
+* Update leaguestart filter ([`e8cfdef`](https://github.com/darvid/wraeblast/commit/e8cfdef5d0da77843ca7c40a1efe863d55ce0de4))
+* Add options to store/load HD5 cache to CLI ([`70bde3b`](https://github.com/darvid/wraeblast/commit/70bde3bc2b36df2e6732d85d917a8a0276c7e175))
+
+### Fix
+* :bug: Quick fix for recently introduced errors ([`bedb698`](https://github.com/darvid/wraeblast/commit/bedb698e79e013c554423db8866f911ca1c13cd9))
+* :bug: Include non-influenced base types in trade filter (fixes #9) ([`04565a8`](https://github.com/darvid/wraeblast/commit/04565a8dae6ff0ed94b33909fbed04d9607920aa))
+
 ## v0.1.3 (2021-09-15)
 ### Fix
 * **filtering:** :bug: Fixed quantile visibility ([`a34d5f2`](https://github.com/darvid/wraeblast/commit/a34d5f283ebccad7fddb74256541c74110fb9372))
