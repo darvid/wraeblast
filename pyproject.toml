@@ -11,11 +11,8 @@ exclude = '''
   '''
 
 [tool.commitizen]
-name = "cz_customize"
+name = "cz_conventional_commits"
 version_files = ["pyproject.toml:version"]
-
-[tool.commitizen.customize]
-schema_pattern = "(init|build|ci|dep-(add|rm|up)|docs|feature|fix|perf|refactor|style|test|chore|revert|bump)(\\(\\S+\\))?!?:(\\s.*)"
 
 [tool.isort]
 ensure_newline_before_comments = true
@@ -62,9 +59,8 @@ pydantic = "^1.8.2"
 cleo = "^0.8.1"
 structlog = "^21.1.0"
 requests = "^2.25.1"
-uplink = { extras = ["aiohttp"], version = "^0.9.4" }
+uplink = { extras = ["aiohttp"], version = "^0.9.6" }
 colour = "^0.1.5"
-diskcache = "^5.2.1"
 python-json-logger = "^2.0.1"
 glom = "^20.11.0"
 "ruamel.yaml" = "^0.17.5"
@@ -81,9 +77,8 @@ backoff = "^1.11.1"
 aiohttp = "^3.7.4"
 cachetools = "^4.2.2"
 inflection = "^0.5.1"
-tables = "^3.6.1"
 pandera = "^0.7.1"
-numpy = "1.21.3"
+numpy = "^1.22.2"
 
 [tool.poetry.dev-dependencies]
 black = "^21.5b1"
@@ -96,7 +91,6 @@ flameprof = "^0.4"
 plotly = "^5.1.0"
 mkdocs-material = "^7.1.11"
 mkdocstrings = "^0.15.2"
-commitizen = "^2.17.13"
 pymdown-extensions = "^8.2"
 mkdocs-literate-nav = "^0.4.0"
 mkdocs-minify-plugin = "^0.4.0"
@@ -107,6 +101,8 @@ pyright = "^0.0.9"
 pandas-stubs = "^1.2.0"
 python-semantic-release = "^7.19.2"
 semver = "2.10"
+boto3-stubs = { extras = ["s3"], version = "^1.20.48" }
+commitizen = "^2.20.4"
 
 [tool.poetry.extras]
 tts = ["pyttsx3"]
