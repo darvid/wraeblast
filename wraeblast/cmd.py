@@ -1,9 +1,13 @@
 import asyncio
 import datetime
 import json
+import os
 import pathlib
+import tempfile
 
+import boto3
 import cleo
+import pandas as pd
 import pkg_resources
 import structlog
 
@@ -60,6 +64,7 @@ class RenderFilterCommand(BaseCommand):
         {--l|league=TEMP : Current league name}
         {--N|no-sync : Prevents automatic insights syncing}
         {--no-insights : Disables all economy data fetching}
+        {--s|store-path= : Fetch HDF from the given path}
         {--p|preset=default : Preset name}
 
     """
@@ -86,6 +91,20 @@ class RenderFilterCommand(BaseCommand):
         options_filename = str(self.option("options-file")).strip()
         tmpl_filename = str(self.argument("file")).strip()
         output_path.parent.mkdir(parents=True, exist_ok=True)
+        store_path = str(self.option("store-path"))
+        store_is_s3 = store_path.startswith("s3://")
+
+        if store_is_s3:
+            bucket, key = store_path[5:].split("/", 1)
+            key_basename = pathlib.Path(key).name
+            self.line(f"<info>Downloading data from S3: {bucket}/{key}</info>")
+            tempdir = tempfile.TemporaryDirectory()
+            key_dest = str(pathlib.Path(tempdir.name) / key_basename)
+            s3 = boto3.resource("s3")
+            s3.Bucket(bucket).download_file(key, key_dest)
+            store = insights._create_hdfstore(key_dest)
+        else:
+            store = insights._create_hdfstore(store_path)
 
         loop = asyncio.get_event_loop()
         filter_context = None
@@ -94,6 +113,7 @@ class RenderFilterCommand(BaseCommand):
                 insights.initialize_filter_context(
                     league=league,
                     no_sync=bool(self.option("no-sync")),
+                    store=store,
                 ),
             )
         else:
@@ -154,6 +174,7 @@ class SyncInsightsCommand(BaseCommand):
     """Fetch Path of Exile economy insights
 
     sync_insights
+        {--s|store-path= : Store HDF at the given path}
         {--l|league=TEMP : Current league name}
 
     """
@@ -163,6 +184,24 @@ class SyncInsightsCommand(BaseCommand):
         self.line("<info>Syncing economy data from poe.ninja</info>")
         league = check_league_option(str(self.option("league")))
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(
-            insights.initialize_insights_cache(league=league),
+        store_path = str(self.option("store-path"))
+        store_is_s3 = store_path.startswith("s3://")
+        if store_is_s3:
+            tempdir = tempfile.TemporaryDirectory()
+            store = insights._create_hdfstore(
+                str(pathlib.Path(tempdir.name) / f"wraeblast-{league}.h5")
+            )
+        else:
+            store = insights._create_hdfstore(store_path)
+        store = loop.run_until_complete(
+            insights.initialize_insights_cache(
+                league=league,
+                store=store,
+            ),
         )
+        if store_is_s3:
+            print(store_path)
+            bucket, key = store_path[5:].split("/", 1)
+            self.line(f"<info>Syncing to S3 bucket: {bucket}/{key}</info>")
+            s3 = boto3.resource("s3")
+            s3.Bucket(bucket).upload_file(store._path, key)
