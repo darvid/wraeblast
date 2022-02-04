@@ -55,6 +55,10 @@
   "Uul-Netol's Breachstone",
   "Esh's Enriched Breachstone",
   "Crescent Splinter",
+  "Al-Hezmin's Crest",
+  "Baran's Crest",
+  "Drox's Crest",
+  "Veritania's Crest",
 ) -%}
 
 {%- set t2_fragments = (
@@ -174,6 +178,7 @@ styles:
       SetTextColor: white
     tags:
       - quest_items
+      - voidstones
   currencies:
     actions:
       MinimapIcon:
@@ -313,6 +318,14 @@ rules:
     tags:
       - currencies
       - catalysts
+
+  - conditions:
+      Class: Atlas Upgrade Item
+    actions:
+      CustomAlertSound: '{{ tts("Voidstone") }}'
+      {{ macros.set_colors_from_colormap(options.colormaps.currencies, 15, vmax=20) }}
+    tags:
+      - voidstones
 
   # T1 Fragments
   {%- for tier, fragments in all_fragments.items(): %}
@@ -549,15 +562,6 @@ rules:
     tags:
       - maps
   {%- endfor %}
-
-  # Watchstones
-  - conditions:
-      BaseType: Watchstone
-    actions:
-      {{ macros.set_colors_from_colormap(options.colormaps.watchstones, 20, vmax=20) }}
-      CustomAlertSound: {{ tts("Watchstone") }}
-    tags:
-      - watchstones
 
   # Metamorph
   - conditions:
