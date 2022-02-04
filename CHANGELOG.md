@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.2 (2022-02-04)
+### Fix
+* Re-add pytables as a dependency ([`cad7ddc`](https://github.com/darvid/wraeblast/commit/cad7ddc641e72f12039a92004a306e98c0394eb5))
+
 ## v0.2.1 (2022-02-04)
 ### Fix
 * Add create hdfstore function skipped from prior commit ([`a8e2931`](https://github.com/darvid/wraeblast/commit/a8e2931df9893100cd6453472330b2c809834013))
