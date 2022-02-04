@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.2.1 (2022-02-04)
+### Fix
+* Add create hdfstore function skipped from prior commit ([`a8e2931`](https://github.com/darvid/wraeblast/commit/a8e2931df9893100cd6453472330b2c809834013))
+
 ## v0.2.0 (2022-02-04)
 ### Feature
 * Update leaguestart filter ([`e8cfdef`](https://github.com/darvid/wraeblast/commit/e8cfdef5d0da77843ca7c40a1efe863d55ce0de4))
