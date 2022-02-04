@@ -70,7 +70,11 @@ shard_names_to_orb_names = {
     "Regal Shard": "Regal Orb",
 }
 
-_cache = pd.HDFStore(os.getenv("WRAEBLAST_CACHE", "./.wbinsights.h5"))
+
+def _create_hdfstore(path: Optional[str] = None) -> pd.HDFStore:
+    if not path:
+        path = os.getenv("WRAEBLAST_CACHE", "./.wbinsights.h5")
+    return pd.HDFStore(path)
 
 
 class InflectedEnumMixin(enum.Enum):
@@ -214,19 +218,18 @@ async def get_dataframes(
 
 async def initialize_insights_cache(
     league: str,
-    cache: Optional[pd.HDFStore] = None,
+    store: Optional[pd.HDFStore] = None,
     no_sync: bool = False,
 ) -> pd.HDFStore:
     """Fetch and cache economy insights as needed."""
-    if cache is None:
-        cache = _cache
-    # log = logger.bind(league=league, cache_dir=cache.directory)
+    if store is None:
+        store = _create_hdfstore()
     log = logger.bind(league=league)
     log.info("cache.initialize", league=league)
     missing_dataframes = []
     for t in get_all_insights_types():
         try:
-            df = cache.get(f"i_{t.value}")
+            df = store.get(f"i_{t.value}")
             log.debug("cache.hit", type=t.value)
         except KeyError:
             log.debug("cache.miss", type=t.value)
@@ -242,27 +245,27 @@ async def initialize_insights_cache(
             lines=df.shape[0],
             type=t.value,
         )
-        cache.put(f"i_{t.value}", df, format="table")
-    return cache
+        store.put(f"i_{t.value}", df, format="table")
+    return store
 
 
 async def initialize_filter_context(
     initialize_cache: bool = True,
     league: Optional[str] = None,
-    cache: Optional[pd.HDFStore] = None,
+    store: Optional[pd.HDFStore] = None,
     no_sync: bool = False,
 ) -> "ItemFilterContext":
     """Create an ``ItemFilterContext`` from cached economy data."""
     if initialize_cache:
         if league is None:
             raise RuntimeError("league must be provided if initializing cache")
+        if store is None:
+            store = _create_hdfstore()
         cache = await initialize_insights_cache(
             league=league,
-            cache=cache,
+            store=store,
             no_sync=no_sync,
         )
-    elif cache is None:
-        cache = _cache
     else:
         raise RuntimeError("cache not provided")
     economy_data = {}
@@ -579,14 +582,14 @@ uplink_retry = uplink.retry(
 @uplink.returns.json
 @uplink.json
 @uplink.get
-def get_json() -> uplink.commands.RequestDefinitionBuilder:
+def get_json():
     """Template for GET requests with JSON as both request and response."""
 
 
 @raise_for_status
 @uplink_retry
 @uplink.get
-def get_dataframe() -> uplink.commands.RequestDefinitionBuilder:
+def get_dataframe():
     ...
 
 
