@@ -70,10 +70,11 @@ class RenderFilterCommand(BaseCommand):
     """
 
     def format_filename(self, format_str: str) -> str:
+        league = check_league_option(str(self.option("league")))
         return datetime.datetime.now().strftime(
             format_str.format(
-                league=str(self.option("league")),
-                league_short=str(self.option("league"))[:3],
+                league=league,
+                league_short=league[:3],
                 preset=str(self.option("preset")),
             )
         )
@@ -200,7 +201,6 @@ class SyncInsightsCommand(BaseCommand):
             ),
         )
         if store_is_s3:
-            print(store_path)
             bucket, key = store_path[5:].split("/", 1)
             self.line(f"<info>Syncing to S3 bucket: {bucket}/{key}</info>")
             s3 = boto3.resource("s3")

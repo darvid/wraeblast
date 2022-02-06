@@ -1,0 +1,122 @@
+{
+    "thresholds": {
+        "artifacts": {
+            "quantile": "D2"
+        },
+        "base_types": {
+            "quantile": "D9"
+        },
+        "blighted_maps": {
+            "quantile": "QU1"
+        },
+        "cluster_jewels": {
+            "quantile": "D2"
+        },
+        "currencies": {
+            "quantile": "D2"
+        },
+        "delirium_orbs": {
+            "quantile": "QU1"
+        },
+        "divination_cards": {
+            "quantile": "QU4"
+        },
+        "essences": {
+            "quantile": "QU2"
+        },
+        "fossils": {
+            "quantile": "D2"
+        },
+        "fragments": {
+            "quantile": "D2"
+        },
+        "incubators": {
+            "quantile": "QU2"
+        },
+        "maps": {
+            "quantile": "D2"
+        },
+        "oils": {
+            "quantile": "D2"
+        },
+        "scarabs": {
+            "quantile": "QU1"
+        },
+        "skill_gems": {
+            "quantile": "QU4"
+        },
+        "uniques": {
+            "quantile": "QU4"
+        },
+        "vials": {
+            "quantile": "QU2"
+        }
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Reds_9_r"
+        },
+        "cluster_jewels": {
+            "name": "Reds_9_r"
+        },
+        "currencies": {
+            "name": "Reds_9_r"
+        },
+        "delirium_orbs": {
+            "name": "Reds_9_r"
+        },
+        "divination_cards": {
+            "name": "Reds_9_r"
+        },
+        "essences": {
+            "name": "Reds_9_r"
+        },
+        "flasks": {
+            "name": "Reds_9_r"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Reds_9_r"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "Reds_9_r",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Reds_9_r"
+        },
+        "oils": {
+            "name": "Reds_9_r"
+        },
+        "scarabs": {
+            "name": "Reds_9_r"
+        },
+        "skill_gems": {
+            "name": "Reds_9_r"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}

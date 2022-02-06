@@ -446,17 +446,6 @@ rules:
       - currencies
       - oils
 
-  # Prophecies
-  - conditions:
-      Class: Currency
-      BaseType: {'==': Prophecy}
-    actions:
-      {{ macros.set_colors_from_colormap(options.colormaps.prophecies, 15, vmax=20) }}
-      CustomAlertSound: {{ tts("Prophecy") }}
-    tags:
-      - currencies
-      - prophecies
-
   # Vials
   - conditions:
       Class: Currency

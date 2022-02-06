@@ -107,7 +107,6 @@ class ItemType(InflectedEnumMixin, enum.Enum):
     INVITATION = "Invitation"
     MAP = "Map"
     OIL = "Oil"
-    PROPHECY = "Prophecy"
     RESONATOR = "Resonator"
     SCARAB = "Scarab"
     SKILL_GEM = "SkillGem"
@@ -118,7 +117,6 @@ class ItemType(InflectedEnumMixin, enum.Enum):
     UNIQUE_MAP = "UniqueMap"
     UNIQUE_WEAPON = "UniqueWeapon"
     VIAL = "Vial"
-    WATCHSTONE = "Watchstone"
 
     @property
     def key_name(self) -> str:

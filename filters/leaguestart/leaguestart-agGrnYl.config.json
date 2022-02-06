@@ -1,24 +1,42 @@
 {
     "thresholds": {
         "artifacts": {},
-        "base_types": {},
-        "blighted_maps": {},
+        "base_types": {
+            "quantile": "D9"
+        },
+        "blighted_maps": {
+            "quantile": "QU1"
+        },
         "cluster_jewels": {},
         "currencies": {},
-        "delirium_orbs": {},
-        "divination_cards": {},
-        "essences": {},
+        "delirium_orbs": {
+            "quantile": "QU1"
+        },
+        "divination_cards": {
+            "quantile": "QU4"
+        },
+        "essences": {
+            "quantile": "QU2"
+        },
         "fossils": {},
         "fragments": {},
-        "incubators": {},
+        "incubators": {
+            "quantile": "QU2"
+        },
         "maps": {},
         "oils": {},
-        "prophecies": {},
-        "scarabs": {},
-        "skill_gems": {},
-        "uniques": {},
-        "vials": {},
-        "watchstones": {}
+        "scarabs": {
+            "quantile": "QU1"
+        },
+        "skill_gems": {
+            "quantile": "QU4"
+        },
+        "uniques": {
+            "quantile": "QU4"
+        },
+        "vials": {
+            "quantile": "QU2"
+        }
     },
     "colormaps": {
         "artifacts": {
@@ -73,9 +91,6 @@
         "oils": {
             "name": "agGrnYl_7"
         },
-        "prophecies": {
-            "name": "Turbid_20_r"
-        },
         "scarabs": {
             "name": "agGrnYl_7"
         },
@@ -84,9 +99,6 @@
         },
         "uniques": {
             "name": "Turbid_20_r"
-        },
-        "watchstones": {
-            "name": "agGrnYl_7"
         },
         "vials": {
             "name": "Turbid_20_r"

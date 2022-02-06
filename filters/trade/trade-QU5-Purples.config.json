@@ -1,0 +1,122 @@
+{
+    "thresholds": {
+        "artifacts": {
+            "quantile": "QU5"
+        },
+        "base_types": {
+            "quantile": "D9"
+        },
+        "blighted_maps": {
+            "quantile": "QU1"
+        },
+        "cluster_jewels": {
+            "quantile": "QU5"
+        },
+        "currencies": {
+            "quantile": "QU5"
+        },
+        "delirium_orbs": {
+            "quantile": "QU1"
+        },
+        "divination_cards": {
+            "quantile": "QU4"
+        },
+        "essences": {
+            "quantile": "QU2"
+        },
+        "fossils": {
+            "quantile": "QU5"
+        },
+        "fragments": {
+            "quantile": "QU5"
+        },
+        "incubators": {
+            "quantile": "QU2"
+        },
+        "maps": {
+            "quantile": "QU5"
+        },
+        "oils": {
+            "quantile": "QU5"
+        },
+        "scarabs": {
+            "quantile": "QU1"
+        },
+        "skill_gems": {
+            "quantile": "QU4"
+        },
+        "uniques": {
+            "quantile": "QU4"
+        },
+        "vials": {
+            "quantile": "QU2"
+        }
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Purples_9"
+        },
+        "cluster_jewels": {
+            "name": "Purples_9"
+        },
+        "currencies": {
+            "name": "Purples_9"
+        },
+        "delirium_orbs": {
+            "name": "Purples_9"
+        },
+        "divination_cards": {
+            "name": "Purples_9"
+        },
+        "essences": {
+            "name": "Purples_9"
+        },
+        "flasks": {
+            "name": "Purples_9"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Purples_9"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "Purples_9",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Purples_9"
+        },
+        "oils": {
+            "name": "Purples_9"
+        },
+        "scarabs": {
+            "name": "Purples_9"
+        },
+        "skill_gems": {
+            "name": "Purples_9"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}

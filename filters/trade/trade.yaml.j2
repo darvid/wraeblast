@@ -62,7 +62,6 @@ styles:
       - currencies
       - fragments
       - scarabs
-      - watchstones
   currencies.stacks:
     actions:
       MinimapIcon:
@@ -579,72 +578,6 @@ rules:
       - currencies
       - garbage
 
-  # Currencies - Prophecies
-  {%- set proph_topk, proph_show, _ = options.thresholds.prophecies.get_tiered_results(ctx.data.prophecies) -%}
-  {%- for index, row in proph_topk.iterrows(): %}
-  - conditions:
-      Class: Currency
-      BaseType: {'==': Prophecy}
-      Prophecy: {'==': "{{ row.item_name }}"}
-    actions:
-      {{ macros.set_colors_from_colormap(options.colormaps.prophecies, row.chaos_value) }}
-      {{- macros.set_tts_alertsound(row, thresholds=options.thresholds.prophecies) }}
-    tags:
-      - prophecies
-      {{- macros.set_tags(
-          row,
-          thresholds=options.thresholds.prophecies,
-          ctx_key="prophecies",
-      ) }}
-  {%- endfor %}
-
-  {%- for percentile, df in proph_show.groupby("percentile"): %}
-  - conditions:
-      Class: Currency
-      BaseType: {'==': Prophecy}
-      Prophecy:
-        '==':
-          {%- for index, row in df.iterrows(): %}
-          - "{{ row.item_name }}"
-          {%- endfor %}
-    actions:
-      {{ macros.set_colors_from_colormap(options.colormaps.prophecies, df.chaos_value.mean()) }}
-      {{ macros.set_tts_alertsound_range(
-            "prophecy",
-            df.chaos_value.min(),
-            df.chaos_value.max(),
-      ) }}
-    tags:
-      - prophecies
-      {%- for tag in options.thresholds.prophecies.get_tags(df, ctx=ctx, ctx_key="prophecies"): %}
-      - {{ tag }}
-      {%- endfor %}
-  {%- endfor %}
-
-  - conditions:
-      Class: Currency
-      BaseType: {'==': Prophecy}
-    actions:
-      {{ macros.set_colors_from_colormap(options.colormaps.prophecies, 1, vmax=20) }}
-    tags:
-      - prophecies
-      - garbage
-
-  - conditions:
-      Class: Currency
-      BaseType: Prophecy
-    tags:
-      - prophecy
-
-  - conditions:
-      Class: Currency
-      BaseType: Perandus Coin
-    actions:
-      {{ macros.set_colors_from_colormap(options.colormaps.currencies, 1) }}
-    tags:
-      - currencies
-      - garbage
-
   # Currencies - chaos orbs, each stack size
   {%- for op, stack_size in iter_stacks(1, 10): %}
   - conditions:
@@ -940,16 +873,6 @@ rules:
       ) }}
   {%- endfor %}
 
-  # Watchstones
-  # XXX: craftable watchstones not indexed by poe.ninja yet
-  - conditions:
-      BaseType: Watchstone
-    actions:
-      CustomAlertSound: '{{ tts("watchstone") }}'
-    tags:
-      - watchstones
-      - quest_items
-
   - conditions:
       BaseType:
         - Golden Key
@@ -966,22 +889,6 @@ rules:
       CustomAlertSound: '{{ tts("quest item") }}'
     tags:
       - quest_items
-
-  # TODO: Rank by region
-  - conditions:
-      BaseType: &AllRegionalWatchstones
-        - Glennach Cairns Watchstone
-        - Haewark Hamlet Watchstone
-        - Lex Ejoris Watchstone
-        - Lex Proxima Watchstone
-        - Lira Arthain Watchstone
-        - New Vastir Watchstone
-        - Tirn's End Watchstone
-        - Valdo's Rest Watchstone
-    actions:
-      {{ macros.set_colors_from_colormap(options.colormaps.watchstones, 1, vmax=20) }}
-    tags:
-      - watchstones
 
   # Expedition - logbooks
   - conditions:

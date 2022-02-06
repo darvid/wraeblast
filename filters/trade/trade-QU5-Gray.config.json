@@ -1,0 +1,122 @@
+{
+    "thresholds": {
+        "artifacts": {
+            "quantile": "QU5"
+        },
+        "base_types": {
+            "quantile": "D9"
+        },
+        "blighted_maps": {
+            "quantile": "QU1"
+        },
+        "cluster_jewels": {
+            "quantile": "QU5"
+        },
+        "currencies": {
+            "quantile": "QU5"
+        },
+        "delirium_orbs": {
+            "quantile": "QU1"
+        },
+        "divination_cards": {
+            "quantile": "QU4"
+        },
+        "essences": {
+            "quantile": "QU2"
+        },
+        "fossils": {
+            "quantile": "QU5"
+        },
+        "fragments": {
+            "quantile": "QU5"
+        },
+        "incubators": {
+            "quantile": "QU2"
+        },
+        "maps": {
+            "quantile": "QU5"
+        },
+        "oils": {
+            "quantile": "QU5"
+        },
+        "scarabs": {
+            "quantile": "QU1"
+        },
+        "skill_gems": {
+            "quantile": "QU4"
+        },
+        "uniques": {
+            "quantile": "QU4"
+        },
+        "vials": {
+            "quantile": "QU2"
+        }
+    },
+    "colormaps": {
+        "artifacts": {
+            "name": "Turbid_20_r"
+        },
+        "base_types": {
+            "name": "Turbid_20_r"
+        },
+        "blighted_maps": {
+            "name": "Gray_20"
+        },
+        "cluster_jewels": {
+            "name": "Gray_20"
+        },
+        "currencies": {
+            "name": "Gray_20"
+        },
+        "delirium_orbs": {
+            "name": "Gray_20"
+        },
+        "divination_cards": {
+            "name": "Gray_20"
+        },
+        "essences": {
+            "name": "Gray_20"
+        },
+        "flasks": {
+            "name": "Gray_20"
+        },
+        "fossils": {
+            "name": "Turbid_20_r"
+        },
+        "fragments": {
+            "name": "Turbid_20_r"
+        },
+        "incubators": {
+            "name": "Gray_20"
+        },
+        "life_flasks": {
+            "name": "Magenta_5"
+        },
+        "mana_flasks": {
+            "name": "BluYl_2"
+        },
+        "maps_tiered": {
+            "name": "Gray_20",
+            "vmax": 14
+        },
+        "maps": {
+            "name": "Gray_20"
+        },
+        "oils": {
+            "name": "Gray_20"
+        },
+        "scarabs": {
+            "name": "Gray_20"
+        },
+        "skill_gems": {
+            "name": "Gray_20"
+        },
+        "uniques": {
+            "name": "Turbid_20_r"
+        },
+        "vials": {
+            "name": "Turbid_20_r"
+        }
+    },
+    "whitelist": {}
+}
