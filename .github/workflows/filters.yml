@@ -35,7 +35,7 @@ jobs:
           python -m pip install --upgrade poetry
           poetry install
       - name: Sync economy data
-        run: poetry run wraeblast sync_insights -s s3://${{ env.WRAEBLAST_BUCKET_DATA }}/$(cat .current-league).h5
+        run: poetry run wraeblast sync_insights -s s3://${{ env.WRAEBLAST_BUCKET_DATA }}/$(cat .current_league).h5
         continue-on-error: true
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
