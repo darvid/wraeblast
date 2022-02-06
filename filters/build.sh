@@ -25,7 +25,7 @@ main() {
       --league "${league}" \
       --preset "$preset" \
       --keep-intermediate \
-      --no-sync \
+      --store-path s3://wraeblast-data/${league}.h5 \
       --output-directory output/"${filter_basename}" \
       --options-file "$config_file" \
       --output "WB-{league_short}-${options_name}.filter" \
