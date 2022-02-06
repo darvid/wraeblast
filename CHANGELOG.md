@@ -2,6 +2,10 @@
 
 <!--next-version-placeholder-->
 
+## v0.3.0 (2022-02-06)
+### Feature
+* Initial 3.17 support: removed perandus, prophecies, and watchstones ([`bf22615`](https://github.com/darvid/wraeblast/commit/bf2261587b8b4cf5b2a8dac33bc309e59f9b1168))
+
 ## v0.2.2 (2022-02-04)
 ### Fix
 * Re-add pytables as a dependency ([`cad7ddc`](https://github.com/darvid/wraeblast/commit/cad7ddc641e72f12039a92004a306e98c0394eb5))
